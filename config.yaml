@@ -1,0 +1,214 @@
+# Workie AI Configuration File
+# This file specifies AI model details and parameters for the agentic coding assistant
+
+# AI Model Configuration
+ai:
+  # Primary language model settings
+  model:
+    # Model provider (ollama, openai, anthropic, etc.)
+    provider: "ollama"
+    
+    # Model name/identifier
+    name: "llama3.2"
+    
+    # Model version or variant (optional)
+    version: "7b-chat"
+    
+    # Temperature for response generation (0.0 = deterministic, 1.0 = creative)
+    temperature: 0.7
+    
+    # Maximum tokens in response
+    max_tokens: 2048
+    
+    # Context window size (if supported by model)
+    context_length: 4096
+    
+    # Top-p sampling parameter
+    top_p: 0.9
+    
+    # Timeout for model requests (in seconds)
+    timeout: 60
+
+  # Ollama-specific settings
+  ollama:
+    # Ollama server URL
+    base_url: "http://localhost:11434"
+    
+    # API endpoints
+    endpoints:
+      chat: "/api/chat"
+      generate: "/api/generate"
+      embeddings: "/api/embeddings"
+    
+    # Keep model loaded in memory
+    keep_alive: "5m"
+    
+    # Number of CPU threads to use
+    num_thread: 4
+    
+    # GPU layers (if using GPU acceleration)
+    num_gpu: 0
+
+  # Alternative model providers (for fallback or specific tasks)
+  providers:
+    openai:
+      api_key: "${OPENAI_API_KEY}"
+      model: "gpt-3.5-turbo"
+      base_url: "https://api.openai.com/v1"
+    
+    anthropic:
+      api_key: "${ANTHROPIC_API_KEY}"
+      model: "claude-3-sonnet-20240229"
+      base_url: "https://api.anthropic.com"
+
+# Task-specific model configurations
+tasks:
+  # Code analysis and review
+  code_analysis:
+    model_override: "llama2:13b-chat"
+    temperature: 0.3
+    max_tokens: 1024
+    
+  # Code generation
+  code_generation:
+    model_override: "codellama:7b-code"
+    temperature: 0.2
+    max_tokens: 2048
+    
+  # Documentation generation
+  documentation:
+    model_override: "llama2:7b-chat"
+    temperature: 0.5
+    max_tokens: 1024
+    
+  # Git commit message generation
+  commit_messages:
+    temperature: 0.4
+    max_tokens: 256
+
+# Prompts and templates
+prompts:
+  # System prompts for different tasks
+  system:
+    code_review: |
+      You are an expert code reviewer. Analyze the provided code and provide constructive feedback on:
+      - Code quality and best practices
+      - Potential bugs or issues
+      - Performance improvements
+      - Readability and maintainability
+      Keep feedback concise and actionable.
+    
+    code_generation: |
+      You are a senior software engineer. Generate clean, well-documented code that follows best practices.
+      Consider error handling, performance, and maintainability.
+    
+    commit_message: |
+      Generate a concise, descriptive git commit message following conventional commit format.
+      Focus on what was changed and why.
+
+# Feature flags for AI capabilities
+features:
+  # Enable code analysis
+  code_analysis: true
+  
+  # Enable automated code generation
+  code_generation: true
+  
+  # Enable commit message generation
+  commit_message_generation: true
+  
+  # Enable documentation generation
+  documentation_generation: true
+  
+  # Enable intelligent suggestions
+  smart_suggestions: true
+  
+  # Enable context-aware assistance
+  context_awareness: true
+
+# Caching configuration
+cache:
+  # Enable response caching
+  enabled: true
+  
+  # Cache directory
+  directory: ".workie/cache"
+  
+  # Cache TTL in minutes
+  ttl: 60
+  
+  # Maximum cache size in MB
+  max_size_mb: 100
+
+# Logging configuration for AI operations
+logging:
+  # AI-specific log level (debug, info, warn, error)
+  ai_level: "info"
+  
+  # Log AI requests and responses
+  log_requests: false
+  
+  # Log file for AI operations
+  ai_log_file: ".workie/logs/ai.log"
+
+# Security and privacy settings
+security:
+  # Sanitize sensitive data in logs
+  sanitize_logs: true
+  
+  # Allowed file extensions for code analysis
+  allowed_extensions:
+    - ".go"
+    - ".py"
+    - ".js"
+    - ".ts"
+    - ".java"
+    - ".cpp"
+    - ".c"
+    - ".rs"
+    - ".rb"
+    - ".php"
+    - ".yaml"
+    - ".yml"
+    - ".json"
+    - ".md"
+  
+  # Maximum file size for analysis (in bytes)
+  max_file_size: 1048576  # 1MB
+  
+  # Exclude patterns (glob patterns)
+  exclude_patterns:
+    - "*.min.js"
+    - "node_modules/**"
+    - "vendor/**"
+    - ".git/**"
+    - "*.log"
+
+# Integration settings
+integrations:
+  # Git integration
+  git:
+    # Auto-generate commit messages
+    auto_commit_messages: false
+    
+    # Analyze diffs before commit
+    pre_commit_analysis: true
+  
+  # Editor integration
+  editor:
+    # Preferred editor for AI-generated content
+    preferred: "code"  # vs code, vim, emacs, etc.
+    
+    # Auto-open generated files
+    auto_open: false
+
+# Performance tuning
+performance:
+  # Concurrent model requests
+  max_concurrent_requests: 2
+  
+  # Request rate limiting (requests per minute)
+  rate_limit: 30
+  
+  # Memory usage limit for model operations (in MB)
+  memory_limit: 1024

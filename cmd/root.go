@@ -122,7 +122,9 @@ Configuration example:
 
 		// If no arguments are provided, show help instead of creating worktree
 		if len(args) == 0 {
-			cmd.Help()
+			if err := cmd.Help(); err != nil {
+				fmt.Fprintf(os.Stderr, "Error displaying help: %v\n", err)
+			}
 			return
 		}
 
@@ -213,5 +215,8 @@ func init() {
 	rootCmd.Flags().BoolVarP(&quiet, "quiet", "q", false, "Enable quiet mode with minimal output")
 
 	// Mark config flag as accepting a filename
-	rootCmd.MarkFlagFilename("config", "yaml", "yml")
+	if err := rootCmd.MarkFlagFilename("config", "yaml", "yml"); err != nil {
+		// This is non-critical, so we just log it
+		fmt.Fprintf(os.Stderr, "Warning: failed to mark config flag as filename: %v\n", err)
+	}
 }

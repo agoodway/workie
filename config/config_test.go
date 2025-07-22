@@ -21,7 +21,7 @@ func TestLoadConfig(t *testing.T) {
 			t.Errorf("Expected no error when config file doesn't exist, got: %v", err)
 		}
 		if config == nil {
-			t.Error("Expected config to be returned, got nil")
+			t.Fatal("Expected config to be returned, got nil")
 		}
 		if len(config.FilesToCopy) != 0 {
 			t.Errorf("Expected empty FilesToCopy, got: %v", config.FilesToCopy)
@@ -45,7 +45,7 @@ func TestLoadConfig(t *testing.T) {
 			t.Errorf("Expected no error, got: %v", err)
 		}
 		if config == nil {
-			t.Error("Expected config to be returned, got nil")
+			t.Fatal("Expected config to be returned, got nil")
 		}
 
 		expectedFiles := []string{".env.example", "config/", "scripts/setup.sh"}
@@ -78,7 +78,7 @@ func TestLoadConfig(t *testing.T) {
 			t.Errorf("Expected no error, got: %v", err)
 		}
 		if config == nil {
-			t.Error("Expected config to be returned, got nil")
+			t.Fatal("Expected config to be returned, got nil")
 		}
 
 		if len(config.FilesToCopy) != 1 || config.FilesToCopy[0] != "README.md" {
@@ -149,7 +149,7 @@ hooks:
 			t.Errorf("Expected no error for valid hooks, got: %v", err)
 		}
 		if config == nil {
-			t.Error("Expected config to be returned, got nil")
+			t.Fatal("Expected config to be returned, got nil")
 		}
 	})
 

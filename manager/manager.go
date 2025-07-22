@@ -788,7 +788,12 @@ func (wm *WorktreeManager) executeHookCommand(command, workDir string, index int
 	case <-time.After(timeout):
 		// Command timed out
 		if cmd.Process != nil {
-			cmd.Process.Kill()
+			if err := cmd.Process.Kill(); err != nil {
+				// Log but don't fail on kill error
+				if wm.Options.Verbose {
+					fmt.Fprintf(os.Stderr, "Warning: failed to kill timed-out process: %v\n", err)
+				}
+			}
 		}
 		result.TimedOut = true
 		result.Duration = timeout

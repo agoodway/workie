@@ -6,21 +6,158 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gopkg.in/yaml.v3"
+	"github.com/spf13/viper"
 )
 
 // Hooks represents lifecycle commands to run at different events
 type Hooks struct {
-	PostCreate     []string `yaml:"post_create"`
-	PreRemove      []string `yaml:"pre_remove"`
-	TimeoutMinutes int      `yaml:"timeout_minutes,omitempty"` // Hook execution timeout in minutes (default: 5)
+	PostCreate     []string `yaml:"post_create" mapstructure:"post_create"`
+	PreRemove      []string `yaml:"pre_remove" mapstructure:"pre_remove"`
+	TimeoutMinutes int      `yaml:"timeout_minutes,omitempty" mapstructure:"timeout_minutes"` // Hook execution timeout in minutes (default: 5)
+}
+
+// AIModel represents AI model configuration
+type AIModel struct {
+	Provider       string  `yaml:"provider" mapstructure:"provider"`
+	Name           string  `yaml:"name" mapstructure:"name"`
+	Version        string  `yaml:"version" mapstructure:"version"`
+	Temperature    float64 `yaml:"temperature" mapstructure:"temperature"`
+	MaxTokens      int     `yaml:"max_tokens" mapstructure:"max_tokens"`
+	ContextLength  int     `yaml:"context_length" mapstructure:"context_length"`
+	TopP           float64 `yaml:"top_p" mapstructure:"top_p"`
+	Timeout        int     `yaml:"timeout" mapstructure:"timeout"`
+}
+
+// OllamaConfig represents Ollama-specific configuration
+type OllamaConfig struct {
+	BaseURL   string            `yaml:"base_url" mapstructure:"base_url"`
+	Endpoints map[string]string `yaml:"endpoints" mapstructure:"endpoints"`
+	KeepAlive string            `yaml:"keep_alive" mapstructure:"keep_alive"`
+	NumThread int               `yaml:"num_thread" mapstructure:"num_thread"`
+	NumGPU    int               `yaml:"num_gpu" mapstructure:"num_gpu"`
+}
+
+// AIConfig represents AI configuration
+type AIConfig struct {
+	Model  AIModel       `yaml:"model" mapstructure:"model"`
+	Ollama OllamaConfig  `yaml:"ollama" mapstructure:"ollama"`
 }
 
 // Config represents the YAML configuration structure
 type Config struct {
-	FilesToCopy []string `yaml:"files_to_copy"`
-	Hooks       *Hooks   `yaml:"hooks,omitempty"`
-	LoadedFrom  string   `yaml:"-"` // Path to the loaded config file (not serialized)
+	FilesToCopy []string  `yaml:"files_to_copy" mapstructure:"files_to_copy"`
+	Hooks       *Hooks    `yaml:"hooks,omitempty" mapstructure:"hooks"`
+	AI          AIConfig  `yaml:"ai" mapstructure:"ai"`
+	LoadedFrom  string    `yaml:"-" mapstructure:"-"` // Path to the loaded config file (not serialized)
+}
+
+// LoadConfigWithViper loads configuration using Viper library
+// This provides enhanced features like environment variable support, defaults, etc.
+func LoadConfigWithViper(repoRoot string, customConfigPath string) (*Config, error) {
+	// Create a new Viper instance
+	v := viper.New()
+	
+	// Set defaults
+	v.SetDefault("ai.model.provider", "ollama")
+	v.SetDefault("ai.model.name", "llama3.2")
+	v.SetDefault("ai.model.temperature", 0.7)
+	v.SetDefault("ai.model.max_tokens", 2048)
+	v.SetDefault("ai.model.context_length", 4096)
+	v.SetDefault("ai.model.top_p", 0.9)
+	v.SetDefault("ai.model.timeout", 60)
+	v.SetDefault("ai.ollama.base_url", "http://localhost:11434")
+	v.SetDefault("ai.ollama.keep_alive", "5m")
+	v.SetDefault("ai.ollama.num_thread", 4)
+	v.SetDefault("ai.ollama.num_gpu", 0)
+	
+	// Environment variable support
+	v.SetEnvPrefix("WORKIE")
+	v.AutomaticEnv()
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	
+	// Validate repository root
+	if repoRoot == "" {
+		return nil, fmt.Errorf("repository root path cannot be empty")
+	}
+
+	// Verify repo root exists and is accessible
+	if info, err := os.Stat(repoRoot); err != nil {
+		if os.IsNotExist(err) {
+			return nil, fmt.Errorf("repository root does not exist: %s", repoRoot)
+		}
+		return nil, fmt.Errorf("cannot access repository root %s: %w", repoRoot, err)
+	} else if !info.IsDir() {
+		return nil, fmt.Errorf("repository root is not a directory: %s", repoRoot)
+	}
+
+	var configPaths []string
+	if customConfigPath != "" {
+		// If custom config path is provided, use only that
+		if filepath.IsAbs(customConfigPath) {
+			configPaths = []string{customConfigPath}
+		} else {
+			// Relative path - resolve relative to repo root
+			configPaths = []string{filepath.Join(repoRoot, customConfigPath)}
+		}
+	} else {
+		// Use default config file locations
+		configPaths = []string{
+			filepath.Join(repoRoot, ".workie.yaml"),
+			filepath.Join(repoRoot, "workie.yaml"),
+			filepath.Join(repoRoot, "config.yaml"),
+		}
+	}
+
+	var configFile string
+	var found bool
+
+	for _, path := range configPaths {
+		if info, err := os.Stat(path); err == nil {
+			// Check if it's a file, not a directory
+			if info.IsDir() {
+				if customConfigPath != "" {
+					return nil, fmt.Errorf("custom config path is a directory, not a file: %s", path)
+				}
+				// For default paths, just skip directories
+				continue
+			}
+			configFile = path
+			found = true
+			break
+		}
+	}
+
+	if found {
+		// Set the config file
+		v.SetConfigFile(configFile)
+		
+		// Read the config
+		if err := v.ReadInConfig(); err != nil {
+			return nil, fmt.Errorf("error reading config file %s: %w", configFile, err)
+		}
+	} else if customConfigPath != "" {
+		// Custom config path was specified but not found
+		return nil, fmt.Errorf("custom config file not found: %s", customConfigPath)
+	}
+	// If no config file found and no custom path specified, continue with defaults
+
+	// Unmarshal into our config struct
+	config := &Config{}
+	if err := v.Unmarshal(config); err != nil {
+		return nil, fmt.Errorf("unable to decode config into struct: %w", err)
+	}
+
+	// Store the actual config file path that was loaded
+	if found {
+		config.LoadedFrom = configFile
+	}
+
+	// Validate the loaded configuration
+	if err := config.Validate(); err != nil {
+		return nil, fmt.Errorf("configuration validation failed: %w", err)
+	}
+
+	return config, nil
 }
 
 // LoadConfig attempts to load configuration from the specified file path,
@@ -124,33 +261,16 @@ func LoadConfig(repoRoot string, customConfigPath string) (*Config, error) {
 		}
 	}
 
-	data, err := os.ReadFile(configFile)
-	if err != nil {
-		if os.IsPermission(err) {
-			return nil, fmt.Errorf("permission denied reading config file: %s - check file permissions", configFile)
-		}
-		return nil, fmt.Errorf("failed to read config file %s: %w", configFile, err)
-	}
+viper.SetConfigType("yaml")
+viper.SetConfigFile(configFile)
 
-	// Validate that file contains some content and looks like YAML
-	content := strings.TrimSpace(string(data))
-	if content == "" {
-		return nil, fmt.Errorf("config file contains no content: %s", configFile)
-	}
+if err := viper.ReadInConfig(); err != nil {
+	return nil, fmt.Errorf("error reading config file: %w", err)
+}
 
-	// Basic check if content looks like YAML (should contain colons or hyphens)
-	if !strings.Contains(content, ":") && !strings.Contains(content, "-") {
-		return nil, fmt.Errorf("config file does not appear to contain valid YAML: %s", configFile)
-	}
-
-	if err := yaml.Unmarshal(data, config); err != nil {
-		// Provide more helpful YAML error messages
-		errorStr := err.Error()
-		if strings.Contains(errorStr, "line") && strings.Contains(errorStr, "column") {
-			return nil, fmt.Errorf("failed to parse YAML config file %s: %s\n\nCommon YAML issues:\n  • Check indentation (use spaces, not tabs)\n  • Ensure colons are followed by spaces\n  • Quote strings containing special characters\n  • Verify bracket/brace matching", configFile, errorStr)
-		}
-		return nil, fmt.Errorf("failed to parse YAML config file %s: %w\n\nThis usually means the YAML syntax is invalid. Please check:\n  • File uses proper YAML format\n  • Indentation is consistent (use spaces)\n  • All keys and values are properly quoted if needed", configFile, err)
-	}
+if err := viper.Unmarshal(config); err != nil {
+	return nil, fmt.Errorf("unable to decode into struct, %w", err)
+}
 
 	// Store the actual config file path that was loaded
 	config.LoadedFrom = configFile
