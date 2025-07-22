@@ -1,6 +1,8 @@
 module github.com/agoodway/workie
 
-go 1.22
+go 1.22.0
+
+toolchain go1.24.5
 
 require (
 	github.com/spf13/cobra v1.8.0

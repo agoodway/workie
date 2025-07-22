@@ -193,7 +193,7 @@ func (c *CommitMessageTool) generateConventionalMessage(modified, added, deleted
 		commitType = "feat"
 		if len(added) == 1 {
 			fileName := getFileName(added[0])
-			if fileName == "commit_message_tool.go" {
+			if strings.Contains(fileName, "commit_message_tool") {
 				description = "add commit message generation tool"
 			} else {
 				description = fmt.Sprintf("add %s", fileName)

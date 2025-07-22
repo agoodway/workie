@@ -61,8 +61,38 @@ func (f *FileSystemTool) Execute(ctx context.Context, params map[string]interfac
 		return "", fmt.Errorf("path parameter is required")
 	}
 
-	// Clean the path to prevent directory traversal
+	// Get the current working directory as the base directory
+	baseDir, err := os.Getwd()
+	if err != nil {
+		return "", fmt.Errorf("failed to get working directory: %v", err)
+	}
+
+	// Clean and resolve the path
 	path = filepath.Clean(path)
+	
+	// If path is relative, join it with base directory
+	if !filepath.IsAbs(path) {
+		path = filepath.Join(baseDir, path)
+	}
+	
+	// Resolve any symlinks
+	resolvedPath, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		// If file doesn't exist yet, just use the cleaned path
+		if !os.IsNotExist(err) {
+			return "", fmt.Errorf("failed to resolve path: %v", err)
+		}
+		resolvedPath = path
+	}
+
+	// Ensure the resolved path is within the base directory
+	relPath, err := filepath.Rel(baseDir, resolvedPath)
+	if err != nil || strings.HasPrefix(relPath, "..") {
+		return "", fmt.Errorf("access denied: path is outside the working directory")
+	}
+
+	// Use the safe resolved path
+	path = resolvedPath
 
 	switch operation {
 	case "read":

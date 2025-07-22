@@ -35,7 +35,10 @@ func (s *SimpleAgent) Execute(ctx context.Context, query string) (string, error)
 			fmt.Println("Detected list files query, using shell tool directly")
 		}
 		
-		tool, _ := s.registry.Get("shell")
+		tool, exists := s.registry.Get("shell")
+		if !exists {
+			return "", fmt.Errorf("shell tool is not registered in the tool registry")
+		}
 		result, err := tool.Execute(ctx, map[string]interface{}{
 			"command": "ls",
 			"args": []interface{}{"-la"},
@@ -54,7 +57,10 @@ func (s *SimpleAgent) Execute(ctx context.Context, query string) (string, error)
 			fmt.Println("Detected branch query, using git tool directly")
 		}
 		
-		tool, _ := s.registry.Get("git")
+		tool, exists := s.registry.Get("git")
+		if !exists {
+			return "", fmt.Errorf("git tool is not registered in the tool registry")
+		}
 		result, err := tool.Execute(ctx, map[string]interface{}{
 			"command": "branch",
 		})
@@ -72,7 +78,10 @@ func (s *SimpleAgent) Execute(ctx context.Context, query string) (string, error)
 			fmt.Println("Detected pwd query, using shell tool directly")
 		}
 		
-		tool, _ := s.registry.Get("shell")
+		tool, exists := s.registry.Get("shell")
+		if !exists {
+			return "", fmt.Errorf("shell tool is not registered in the tool registry")
+		}
 		result, err := tool.Execute(ctx, map[string]interface{}{
 			"command": "pwd",
 		})
@@ -121,7 +130,10 @@ func (s *SimpleAgent) Execute(ctx context.Context, query string) (string, error)
 
 // generateCommitMessageWithGit uses git tools to analyze changes
 func (s *SimpleAgent) generateCommitMessageWithGit(ctx context.Context) (string, error) {
-	gitTool, _ := s.registry.Get("git")
+	gitTool, exists := s.registry.Get("git")
+	if !exists {
+		return "", fmt.Errorf("git tool is not registered in the tool registry")
+	}
 	
 	// Get status
 	statusResult, err := gitTool.Execute(ctx, map[string]interface{}{

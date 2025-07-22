@@ -67,7 +67,13 @@ func FormatToolsPrompt(tools []Tool) string {
 	toolDescriptions := "You are an AI assistant with access to tools that can execute system commands. You have access to the following tools:\n\n"
 	
 	for _, tool := range tools {
-		params, _ := json.MarshalIndent(tool.Parameters(), "", "  ")
+		params, err := json.MarshalIndent(tool.Parameters(), "", "  ")
+		if err != nil {
+			toolDescriptions += "Tool: " + tool.Name() + "\n"
+			toolDescriptions += "Description: " + tool.Description() + "\n"
+			toolDescriptions += "Parameters: [Error formatting parameters: " + err.Error() + "]\n\n"
+			continue
+		}
 		toolDescriptions += "Tool: " + tool.Name() + "\n"
 		toolDescriptions += "Description: " + tool.Description() + "\n"
 		toolDescriptions += "Parameters: " + string(params) + "\n\n"
