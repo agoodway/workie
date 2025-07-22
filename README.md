@@ -75,6 +75,9 @@ workie init
 workie feature/new-ui
 workie bugfix/issue-123
 
+# Create worktree and change directory to it (using quiet mode)
+cd $(workie -q feature/new-feature)
+
 # List existing worktrees
 workie --list
 workie -l
@@ -319,7 +322,6 @@ Hooks allow you to execute commands at different stages in the lifecycle of a wo
 
 - **post_create**: Commands to run after creating a new worktree.
 - **pre_remove**: Commands to run before removing a worktree.
-- **post_cd**: Commands to run after changing to a worktree.
 
 ### Configuration Example
 
@@ -334,16 +336,12 @@ hooks:
   pre_remove:
     - "echo 'Cleaning up...'"
     - "rm -rf /tmp/*"
-  post_cd:
-    - "echo 'Entering worktree'"
-    - "ls -l"
 ```
 
 ### Common Use Cases
 
 - **Setting up development environments** with `post_create`, ensuring all dependencies are installed.
 - **Cleanup tasks** using `pre_remove` to tidy up temporary files.
-- **Post-cd actions** with `post_cd` to perform actions after changing to a worktree.
 
 ### Security Considerations
 

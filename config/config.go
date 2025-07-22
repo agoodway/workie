@@ -13,7 +13,6 @@ import (
 type Hooks struct {
 	PostCreate     []string `yaml:"post_create"`
 	PreRemove      []string `yaml:"pre_remove"`
-	PostCd         []string `yaml:"post_cd"`                   // Commands to run after changing directory to worktree
 	TimeoutMinutes int      `yaml:"timeout_minutes,omitempty"` // Hook execution timeout in minutes (default: 5)
 }
 
@@ -21,8 +20,7 @@ type Hooks struct {
 type Config struct {
 	FilesToCopy []string `yaml:"files_to_copy"`
 	Hooks       *Hooks   `yaml:"hooks,omitempty"`
-	AutoCd      bool     `yaml:"auto_cd,omitempty"` // Automatically change directory to worktree after creation
-	LoadedFrom  string   `yaml:"-"`                 // Path to the loaded config file (not serialized)
+	LoadedFrom  string   `yaml:"-"` // Path to the loaded config file (not serialized)
 }
 
 // LoadConfig attempts to load configuration from the specified file path,
@@ -229,7 +227,7 @@ func (c *Config) validateHooks() error {
 	}
 
 	// Count total hooks for performance warning
-	totalHooks := len(c.Hooks.PostCreate) + len(c.Hooks.PreRemove) + len(c.Hooks.PostCd)
+	totalHooks := len(c.Hooks.PostCreate) + len(c.Hooks.PreRemove)
 	if totalHooks > 20 {
 		return fmt.Errorf("configuration contains %d hooks total - this might impact performance. Consider reducing the number of hooks or combining commands", totalHooks)
 	}
@@ -241,11 +239,6 @@ func (c *Config) validateHooks() error {
 
 	// Validate pre_remove hooks
 	if err := c.validateHookCommands("pre_remove", c.Hooks.PreRemove); err != nil {
-		return err
-	}
-
-	// Validate post_cd hooks
-	if err := c.validateHookCommands("post_cd", c.Hooks.PostCd); err != nil {
 		return err
 	}
 

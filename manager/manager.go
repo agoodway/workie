@@ -448,40 +448,19 @@ func (wm *WorktreeManager) CreateWorktreeBranch(branchName string) error {
 		fmt.Printf("   Files copied to worktree: None (no files configured)\n")
 	}
 
-	// Handle auto_cd configuration and post_cd hooks
-	if wm.Config.AutoCd {
-		wm.printf("\n🔄 Auto-changing directory to worktree...\n")
+	// Show next steps in non-quiet mode
+	if !wm.Options.Quiet {
+		fmt.Printf("\n🚀 To start working:\n")
+		fmt.Printf("   cd %s\n", worktreePath)
+		fmt.Printf("\nNext steps:\n")
+		fmt.Printf("   • Make your changes\n")
+		fmt.Printf("   • Commit your work: git add . && git commit -m 'Your message'\n")
+		fmt.Printf("   • Push when ready: git push -u origin %s\n", branchName)
+	}
 
-		// Change to the worktree directory
-		if err := os.Chdir(worktreePath); err != nil {
-			fmt.Printf("⚠️  Warning: Failed to change to worktree directory: %v\n", err)
-			fmt.Printf("   You can manually change with: cd %s\n", worktreePath)
-		} else {
-			wm.printf("✓ Changed to worktree directory: %s\n", worktreePath)
-
-			// Execute post_cd hooks if configured
-			if wm.HasPostCdHooks() {
-				if err := wm.ExecuteHooks(wm.Config.Hooks.PostCd, worktreePath, "post_cd"); err != nil {
-					// Don't fail the entire operation for hook errors, just warn
-					fmt.Printf("⚠️  Warning: Some post_cd hooks failed, but directory change was successful\n")
-					if wm.Options.Verbose {
-						fmt.Printf("Hook execution details: %v\n", err)
-					}
-				}
-			} else {
-				wm.printf("🪝 No post_cd hooks configured\n")
-			}
-		}
-	} else {
-		// Only show "To start working" in non-quiet mode when auto_cd is disabled
-		if !wm.Options.Quiet {
-			fmt.Printf("\n🚀 To start working:\n")
-			fmt.Printf("   cd %s\n", worktreePath)
-			fmt.Printf("\nNext steps:\n")
-			fmt.Printf("   • Make your changes\n")
-			fmt.Printf("   • Commit your work: git add . && git commit -m 'Your message'\n")
-			fmt.Printf("   • Push when ready: git push -u origin %s\n", branchName)
-		}
+	// For quiet mode, just output the worktree path
+	if wm.Options.Quiet {
+		fmt.Println(worktreePath)
 	}
 
 	return nil
@@ -686,10 +665,6 @@ func (wm *WorktreeManager) HasPreRemoveHooks() bool {
 	return wm.Config != nil && wm.Config.Hooks != nil && len(wm.Config.Hooks.PreRemove) > 0
 }
 
-// HasPostCdHooks checks if post_cd hooks are configured
-func (wm *WorktreeManager) HasPostCdHooks() bool {
-	return wm.Config != nil && wm.Config.Hooks != nil && len(wm.Config.Hooks.PostCd) > 0
-}
 
 // parseCommand splits command strings into executable parts
 // It handles shell-style commands with pipes, redirects, etc.
