@@ -1,0 +1,26 @@
+# Demo Configuration - Comprehensive Hook Error Handling
+# ======================================================
+# This configuration demonstrates the new error handling features
+
+files_to_copy:
+  - README.md
+
+hooks:
+  # Set a custom timeout for demonstration
+  timeout_minutes: 2
+  
+  post_create:
+    - "echo '🚀 Starting demo hooks...'"
+    - "echo '✅ This command will succeed'"
+    - "sleep 1"  # Short delay to show progress
+    - "echo '⚠️  Demonstrating conditional commands'"
+    - "nonexistent-command || echo '💡 Handled missing command gracefully'"
+    - "echo '🔧 Testing file permissions'"
+    - "touch /tmp/test-file && chmod +x /tmp/test-file || echo '📁 Permission demo'"
+    - "echo '🎯 All demos completed!'"
+  
+  pre_remove:
+    - "echo '🧹 Starting cleanup demo...'"
+    - "echo '✅ This cleanup will succeed'"  
+    - "cleanup-command-that-fails || echo '💡 Cleanup failure handled gracefully'"
+    - "echo '🏁 Cleanup demo finished!'"

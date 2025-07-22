@@ -1,0 +1,11 @@
+server:
+  port: 8080
+  host: localhost
+
+database:
+  type: sqlite
+  path: ./dev.db
+
+logging:
+  level: debug
+  output: stdout
