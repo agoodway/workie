@@ -102,9 +102,9 @@ jobs:
         GOARCH: ${{ matrix.goarch }}
       run: |
         if [ "$GOOS" = "windows" ]; then
-          go build -o dist/workie-${{ matrix.goos }}-${{ matrix.goarch }}.exe ./cmd/workie
+          go build -o dist/workie-${{ matrix.goos }}-${{ matrix.goarch }}.exe .
         else
-          go build -o dist/workie-${{ matrix.goos }}-${{ matrix.goarch }} ./cmd/workie
+          go build -o dist/workie-${{ matrix.goos }}-${{ matrix.goarch }} .
         fi
 
     - name: Upload build artifacts
