@@ -33,7 +33,7 @@ func (g *GitTool) Parameters() map[string]interface{} {
 			"command": map[string]interface{}{
 				"type":        "string",
 				"description": "The git subcommand to execute (e.g., 'branch', 'status', 'log')",
-				"enum":        []string{"branch", "status", "log", "remote", "diff", "show"},
+				"enum":        []string{"branch", "status", "log", "remote", "diff", "show", "add", "commit"},
 			},
 			"args": map[string]interface{}{
 				"type":        "array",
@@ -77,6 +77,16 @@ func (g *GitTool) Execute(ctx context.Context, params map[string]interface{}) (s
 		// Limit log output by default
 		if len(args) == 1 {
 			args = append(args, "--oneline", "-n", "10")
+		}
+	case "status":
+		// If no args, add short format
+		if len(args) == 1 {
+			args = append(args, "--short")
+		}
+	case "diff":
+		// If no args, show both staged and unstaged changes
+		if len(args) == 1 {
+			args = append(args, "--stat")
 		}
 	}
 

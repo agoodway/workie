@@ -31,7 +31,9 @@ With the --tools flag, the AI can execute system commands to answer questions li
 - "What is the current git branch?"
 - "List files in the current directory"
 - "Show the contents of README.md"
-- "What is the current working directory?"`,
+- "What is the current working directory?"
+- "Create a commit message based on the files changed"
+- "Generate a detailed commit message"`,
 	Example: `  # Simple question without tools
   workie ask "What is Git?"
   
@@ -39,7 +41,10 @@ With the --tools flag, the AI can execute system commands to answer questions li
   workie ask --tools "What is the current branch name?"
   
   # Verbose mode to see tool calls
-  workie ask --tools --verbose "Show me the last 5 git commits"`,
+  workie ask --tools --verbose "Show me the last 5 git commits"
+  
+  # Generate commit message
+  workie ask --tools "Create a commit message based on the files changed"`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		question := args[0]
@@ -76,6 +81,7 @@ With the --tools flag, the AI can execute system commands to answer questions li
 			registry.Register(tools.NewGitTool())
 			registry.Register(tools.NewShellTool())
 			registry.Register(tools.NewFileSystemTool())
+			registry.Register(tools.NewCommitMessageTool())
 
 			// Use SimpleAgent for better handling
 			agent := tools.NewSimpleAgent(llm, registry, askVerbose)
