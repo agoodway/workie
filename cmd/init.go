@@ -258,7 +258,56 @@ files_to_copy:
 # - Use 'workie --verbose' to see detailed copy operations
 # - Check file permissions if copies fail
 # - Use 'workie --list' to see all your worktrees
-# - Use 'workie remove <branch>' to clean up test worktrees
+# - Use 'workie finish <branch>' to clean up test worktrees
+
+# Issue Provider Configuration (Optional)
+# ======================================
+# Connect to GitHub, Jira, or Linear to work with issues
+
+# Default provider to use when no provider is specified in issue commands
+# default_provider: github
+
+# providers:
+#   github:
+#     enabled: true
+#     settings:
+#       token_env: "GITHUB_TOKEN"  # Environment variable containing GitHub personal access token
+#       owner: "your-org"          # Repository owner/organization
+#       repo: "your-repo"          # Repository name
+#     branch_prefix:
+#       bug: "fix/"
+#       feature: "feat/"
+#       default: "issue/"
+#
+#   jira:
+#     enabled: false
+#     settings:
+#       base_url: "https://your-company.atlassian.net"
+#       email_env: "JIRA_EMAIL"      # Environment variable for Jira email
+#       api_token_env: "JIRA_TOKEN"  # Environment variable for Jira API token
+#       project: "PROJ"              # Default project key
+#     branch_prefix:
+#       bug: "bugfix/"
+#       story: "feature/"
+#       task: "task/"
+#       default: "jira/"
+#
+#   linear:
+#     enabled: false
+#     settings:
+#       api_key_env: "LINEAR_API_KEY"  # Environment variable for Linear API key
+#       team_id: "TEAM"                # Optional: filter by team
+#     branch_prefix:
+#       bug: "fix/"
+#       feature: "feat/"
+#       default: "linear/"
+
+# Issue Provider Usage:
+# ===================
+# - List issues: workie issues
+# - View issue: workie issues github:123
+# - Create worktree from issue: workie issues github:123 --create
+# - Filter issues: workie issues --assignee me --status open
 `
 }
 

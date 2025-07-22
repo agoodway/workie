@@ -1,0 +1,19 @@
+# Workie Configuration
+files_to_copy:
+  - .env.example
+  - README.md
+
+# Default provider for issue commands
+default_provider: github
+
+providers:
+  github:
+    enabled: true
+    settings:
+      token_env: "WORKIE_GITHUB_TOKEN"
+      owner: "agoodway"
+      repo: "workie"
+    branch_prefix:
+      bug: "fix/"
+      feature: "feat/"
+      default: "issue/"

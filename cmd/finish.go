@@ -13,15 +13,15 @@ import (
 )
 
 var (
-	forceRemove bool
+	forceFinish bool
 	pruneBranch bool
 )
 
-// removeCmd represents the remove command
-var removeCmd = &cobra.Command{
-	Use:   "remove [branch-name]",
-	Short: "Remove a worktree and optionally its branch",
-	Long: `Remove a worktree when you're finished working on a branch.
+// finishCmd represents the finish command
+var finishCmd = &cobra.Command{
+	Use:   "finish [branch-name]",
+	Short: "Finish working on a branch by removing its worktree",
+	Long: `Finish removes a worktree when you're done working on a branch.
 
 This command will:
 1. Execute any pre_remove hooks configured in .workie.yaml
@@ -35,17 +35,17 @@ changes. These hooks run in the worktree directory that will be removed.
 
 Use this when you've finished working on a feature branch and want to
 clean up your development environment.`,
-	Example: `  # Remove a specific worktree (keeps the branch)
-  workie remove feature/user-auth
+	Example: `  # Finish working on a specific branch (keeps the branch)
+  workie finish feature/user-auth
 
-  # Remove worktree and delete the branch
-  workie remove feature/completed-feature --prune-branch
+  # Finish and delete the branch
+  workie finish feature/completed-feature --prune-branch
 
-  # Force remove even with uncommitted changes
-  workie remove feature/experimental --force
+  # Force finish even with uncommitted changes
+  workie finish feature/experimental --force
 
-  # Remove worktree, delete branch, and force if needed
-  workie remove hotfix/old-fix --prune-branch --force`,
+  # Finish, delete branch, and force if needed
+  workie finish hotfix/old-fix --prune-branch --force`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		branchName := args[0]
@@ -71,14 +71,14 @@ clean up your development environment.`,
 		}
 
 		// Remove the worktree
-		if err := removeWorktree(wm, branchName); err != nil {
+		if err := finishWorktree(wm, branchName); err != nil {
 			fmt.Fprintf(os.Stderr, "❌ Error: %v\n", err)
 			os.Exit(1)
 		}
 	},
 }
 
-func removeWorktree(wm *manager.WorktreeManager, branchName string) error {
+func finishWorktree(wm *manager.WorktreeManager, branchName string) error {
 	// Validate branch name
 	if strings.TrimSpace(branchName) == "" {
 		return fmt.Errorf("branch name cannot be empty")
@@ -111,12 +111,12 @@ func removeWorktree(wm *manager.WorktreeManager, branchName string) error {
 	}
 
 	// Check if worktree is currently active/checked out
-	if err := checkWorktreeStatus(wm, worktreePath); err != nil && !forceRemove {
+	if err := checkWorktreeStatus(wm, worktreePath); err != nil && !forceFinish {
 		return fmt.Errorf("worktree removal blocked: %w\n\nTo fix this:\n  • Commit or stash your changes\n  • Use --force to remove anyway (will lose uncommitted changes)", err)
 	}
 
 	if !wm.Options.Quiet {
-		fmt.Printf("🗑️  Removing worktree: %s\n", branchName)
+		fmt.Printf("🗑️  Finishing work on: %s\n", branchName)
 		if wm.Options.Verbose {
 			fmt.Printf("Worktree path: %s\n", worktreePath)
 		}
@@ -144,7 +144,7 @@ func removeWorktree(wm *manager.WorktreeManager, branchName string) error {
 	}
 
 	if !wm.Options.Quiet {
-		fmt.Printf("\n✅ Cleanup completed for: %s\n", branchName)
+		fmt.Printf("\n✅ Finished with: %s\n", branchName)
 		if !pruneBranch {
 			fmt.Printf("\n💡 Tip: The branch '%s' still exists. Use --prune-branch to delete it next time.\n", branchName)
 		}
@@ -182,7 +182,7 @@ func checkWorktreeStatus(wm *manager.WorktreeManager, worktreePath string) error
 func executeWorktreeRemove(wm *manager.WorktreeManager, worktreePath string) error {
 	args := []string{"worktree", "remove"}
 
-	if forceRemove {
+	if forceFinish {
 		args = append(args, "--force")
 	}
 
@@ -234,7 +234,7 @@ func removeBranch(wm *manager.WorktreeManager, branchName string) error {
 
 	// Remove the branch
 	args := []string{"branch"}
-	if forceRemove {
+	if forceFinish {
 		args = append(args, "-D") // Force delete
 	} else {
 		args = append(args, "-d") // Safe delete (only if merged)
@@ -255,7 +255,7 @@ func removeBranch(wm *manager.WorktreeManager, branchName string) error {
 		stderrStr := stderr.String()
 		if _, ok := err.(*exec.ExitError); ok {
 			if strings.Contains(stderrStr, "not fully merged") {
-				return fmt.Errorf("branch removal failed: branch '%s' is not fully merged\n\nError details: %s\n\nTo fix this:\n  • Merge the branch first: git checkout main && git merge %s\n  • Use --force to delete anyway (will lose unmerged changes)\n  • Or remove the worktree without --prune-branch", branchName, stderrStr, branchName)
+				return fmt.Errorf("branch removal failed: branch '%s' is not fully merged\n\nError details: %s\n\nTo fix this:\n  • Merge the branch first: git checkout main && git merge %s\n  • Use --force to delete anyway (will lose unmerged changes)\n  • Or finish the worktree without --prune-branch", branchName, stderrStr, branchName)
 			}
 			return fmt.Errorf("branch removal failed\n\nError details: %s\n\nTo fix this:\n  • Check if branch is merged\n  • Use --force to force deletion\n  • Verify branch name is correct", stderrStr)
 		}
@@ -266,9 +266,9 @@ func removeBranch(wm *manager.WorktreeManager, branchName string) error {
 }
 
 func init() {
-	rootCmd.AddCommand(removeCmd)
+	rootCmd.AddCommand(finishCmd)
 
-	// Add flags specific to remove command
-	removeCmd.Flags().BoolVarP(&forceRemove, "force", "f", false, "Force removal even with uncommitted changes")
-	removeCmd.Flags().BoolVarP(&pruneBranch, "prune-branch", "p", false, "Also delete the branch after removing worktree")
+	// Add flags specific to finish command
+	finishCmd.Flags().BoolVarP(&forceFinish, "force", "f", false, "Force removal even with uncommitted changes")
+	finishCmd.Flags().BoolVarP(&pruneBranch, "prune-branch", "p", false, "Also delete the branch after removing worktree")
 }

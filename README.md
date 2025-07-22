@@ -71,21 +71,21 @@ workie --version
 # Initialize configuration file in your project
 workie init
 
-# Create worktree with specific branch name
-workie feature/new-ui
-workie bugfix/issue-123
+# Begin work on a new branch with worktree
+workie begin feature/new-ui
+workie begin bugfix/issue-123
 
-# Create worktree and change directory to it (using quiet mode)
-cd $(workie -q feature/new-feature)
+# Begin work and change directory to it (using quiet mode)
+cd $(workie begin -q feature/new-feature)
 
 # List existing worktrees
 workie --list
 workie -l
 
-# Remove worktree when finished with branch
-workie remove feature/completed-work
-workie remove feature/old-branch --prune-branch
-workie remove feature/experimental --force
+# Finish working on a branch (remove worktree)
+workie finish feature/completed-work
+workie finish feature/old-branch --prune-branch
+workie finish feature/experimental --force
 ```
 
 ### Help and Information
@@ -96,6 +96,31 @@ workie --help
 
 # Display version, commit, and build information
 workie --version
+```
+
+### Issue Provider Integration
+
+Workie can integrate with GitHub, Jira, and Linear to streamline your issue-based workflow:
+
+```bash
+# List issues from configured providers
+workie issues
+
+# List issues from a specific provider
+workie issues --provider github
+
+# View issue details
+workie issues github:123
+workie issues jira:PROJ-456
+workie issues linear:TEAM-789
+
+# Create a worktree from an issue
+workie issues github:123 --create
+workie issues jira:PROJ-456 -c
+
+# Filter issues
+workie issues --assignee me --status open
+workie issues --labels bug,urgent --limit 10
 ```
 
 ## Configuration
@@ -260,7 +285,7 @@ No configuration file found
 
 1. **Use verbose mode** to see detailed copying logs:
    ```bash
-   workie feature/new-branch --verbose
+   workie begin feature/new-branch --verbose
    ```
 
 2. **Validate your YAML configuration**:
@@ -348,6 +373,86 @@ hooks:
 - Avoid destructive commands like `rm -rf /` in hooks.
 - Validate all inputs and paths to prevent injection attacks.
 - Limit the number of hooks and complexity to maintain performance.
+
+## Issue Provider Configuration
+
+Workie can connect to GitHub, Jira, and Linear to fetch issues and create worktrees based on them. Configure providers in your `.workie.yaml`:
+
+### Setting a Default Provider
+
+You can set a default provider to use when no provider is specified in issue commands:
+
+```yaml
+default_provider: github
+```
+
+With this setting, you can use simplified commands:
+- `workie issues 123` instead of `workie issues github:123`
+- `workie issues 123 --create` instead of `workie issues github:123 --create`
+
+### GitHub Provider
+
+```yaml
+providers:
+  github:
+    enabled: true
+    settings:
+      token_env: "GITHUB_TOKEN"  # Environment variable with your GitHub token
+      owner: "your-org"          # Repository owner or organization
+      repo: "your-repo"          # Repository name
+    branch_prefix:
+      bug: "fix/"
+      feature: "feat/"
+      default: "issue/"
+```
+
+### Jira Provider
+
+```yaml
+providers:
+  jira:
+    enabled: true
+    settings:
+      base_url: "https://your-company.atlassian.net"
+      email_env: "JIRA_EMAIL"      # Environment variable with your Jira email
+      api_token_env: "JIRA_TOKEN"  # Environment variable with your Jira API token
+      project: "PROJ"              # Default project key
+    branch_prefix:
+      bug: "bugfix/"
+      story: "feature/"
+      task: "task/"
+      default: "jira/"
+```
+
+### Linear Provider
+
+```yaml
+providers:
+  linear:
+    enabled: true
+    settings:
+      api_key_env: "LINEAR_API_KEY"  # Environment variable with your Linear API key
+      team_id: "TEAM"                # Optional: filter by team
+    branch_prefix:
+      bug: "fix/"
+      feature: "feat/"
+      default: "linear/"
+```
+
+### Setting Up Authentication
+
+1. **GitHub**: Create a personal access token at https://github.com/settings/tokens
+2. **Jira**: Create an API token at https://id.atlassian.com/manage-profile/security/api-tokens
+3. **Linear**: Create an API key at https://linear.app/settings/api
+
+Store these tokens in environment variables:
+
+```bash
+export GITHUB_TOKEN="your-github-token"
+export JIRA_EMAIL="your-email@company.com"
+export JIRA_TOKEN="your-jira-api-token"
+export LINEAR_API_KEY="your-linear-api-key"
+```
 
 ## Error Handling
 

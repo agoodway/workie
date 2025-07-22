@@ -18,6 +18,7 @@ type Options struct {
 	ConfigFile string // Path to custom config file
 	Verbose    bool   // Enable verbose output
 	Quiet      bool   // Enable quiet mode
+	ShowInitMessages bool   // Show initialization messages (git repo detection, config loading)
 }
 
 // WorktreeManager handles git worktree operations
@@ -86,12 +87,14 @@ func (wm *WorktreeManager) DetectGitRepository() error {
 	parentDir := filepath.Dir(wm.RepoPath)
 	wm.WorktreesDir = filepath.Join(parentDir, fmt.Sprintf("%s-worktrees", wm.RepoName))
 
-	wm.printf("✓ Detected git repository: %s\n", wm.RepoPath)
-	if wm.Options.Verbose {
-		wm.printf("✓ Repository name: %s\n", wm.RepoName)
-		wm.printf("✓ Parent directory: %s\n", filepath.Dir(wm.RepoPath))
+	if wm.Options.ShowInitMessages {
+		wm.printf("✓ Detected git repository: %s\n", wm.RepoPath)
+		if wm.Options.Verbose {
+			wm.printf("✓ Repository name: %s\n", wm.RepoName)
+			wm.printf("✓ Parent directory: %s\n", filepath.Dir(wm.RepoPath))
+		}
+		wm.printf("✓ Worktrees directory: %s\n", wm.WorktreesDir)
 	}
-	wm.printf("✓ Worktrees directory: %s\n", wm.WorktreesDir)
 
 	return nil
 }
@@ -120,13 +123,15 @@ func (wm *WorktreeManager) LoadConfig() error {
 	}
 
 	// Print config loading info based on output mode
-	if wm.Config.LoadedFrom != "" && !wm.Options.Quiet {
-		wm.printf("✓ Loaded configuration from: %s\n", wm.Config.LoadedFrom)
-		if len(wm.Config.FilesToCopy) > 0 {
-			wm.printf("✓ Files to copy: %d entries\n", len(wm.Config.FilesToCopy))
+	if wm.Options.ShowInitMessages {
+		if wm.Config.LoadedFrom != "" && !wm.Options.Quiet {
+			wm.printf("✓ Loaded configuration from: %s\n", wm.Config.LoadedFrom)
+			if len(wm.Config.FilesToCopy) > 0 {
+				wm.printf("✓ Files to copy: %d entries\n", len(wm.Config.FilesToCopy))
+			}
+		} else if wm.Config.LoadedFrom == "" && !wm.Options.Quiet {
+			wm.printf("✓ No configuration file found - using default settings\n")
 		}
-	} else if wm.Config.LoadedFrom == "" && !wm.Options.Quiet {
-		wm.printf("✓ No configuration file found - using default settings\n")
 	}
 
 	return nil
@@ -139,7 +144,9 @@ func (wm *WorktreeManager) CreateWorktreesDirectory() error {
 		if !info.IsDir() {
 			return fmt.Errorf("worktrees path already exists but is not a directory: %s\n\nTo fix this:\n  • Remove the file at this path\n  • Or choose a different location for worktrees", wm.WorktreesDir)
 		}
-		wm.printf("✓ Using existing worktrees directory: %s\n", wm.WorktreesDir)
+		if wm.Options.ShowInitMessages {
+			wm.printf("✓ Using existing worktrees directory: %s\n", wm.WorktreesDir)
+		}
 		return nil
 	}
 
@@ -154,7 +161,9 @@ func (wm *WorktreeManager) CreateWorktreesDirectory() error {
 		return fmt.Errorf("failed to create worktrees directory %s: %w\n\nTo fix this:\n  • Check available disk space\n  • Verify directory permissions\n  • Ensure the path is valid", wm.WorktreesDir, err)
 	}
 
-	wm.printf("✓ Created worktrees directory: %s\n", wm.WorktreesDir)
+	if wm.Options.ShowInitMessages {
+		wm.printf("✓ Created worktrees directory: %s\n", wm.WorktreesDir)
+	}
 	return nil
 }
 
@@ -985,8 +994,10 @@ func (wm *WorktreeManager) displayHookSummary(summary HookSummary) {
 
 // Run executes the main workflow
 func (wm *WorktreeManager) Run(branchName string) error {
-	wm.printf("🌳 Workie\n")
-	wm.printf("==============================================\n")
+	if wm.Options.ShowInitMessages {
+		wm.printf("🌳 Workie\n")
+		wm.printf("==============================================\n")
+	}
 
 	// Step 1: Detect git repository
 	if err := wm.DetectGitRepository(); err != nil {

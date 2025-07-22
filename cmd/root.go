@@ -13,7 +13,7 @@ import (
 
 // Version information - updated during build
 var (
-	Version   = "dev"     // Will be set during build with ldflags
+	Version   = "0.2.0"     // Will be set during build with ldflags
 	Commit    = "unknown" // Will be set during build with ldflags
 	BuildDate = "unknown" // Will be set during build with ldflags
 )
@@ -28,7 +28,7 @@ var (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "workie [branch-name]",
+	Use:   "workie",
 	Short: "Workie - An agentic coding assistant CLI with Git worktree management",
 	Long: `Workie is an agentic coding assistant CLI that streamlines development workflows
 through intelligent Git worktree management. It creates isolated development
@@ -47,33 +47,33 @@ Configuration example:
     - .env.example
     - config/
     - scripts/setup.sh`,
-	Example: `  # Show help (when no arguments are provided)
+	Example: `  # Show help
   workie
 
   # Initialize a new project with configuration
   workie init
 
-  # Create isolated development environments for different features
-  workie feature/user-auth
-  workie feature/ai-integration
-  workie hotfix/security-patch
+  # Begin work on different features
+  workie begin feature/user-auth
+  workie begin feature/ai-integration
+  workie begin hotfix/security-patch
 
   # List all active development environments
   workie --list
 
-  # Remove worktree when finished with a branch
-  workie remove feature/completed-feature
-  workie remove feature/old-work --prune-branch --force
+  # Finish working on a branch
+  workie finish feature/completed-feature
+  workie finish feature/old-work --prune-branch --force
 
   # Use custom configuration for specific workflows
-  workie --config .workie-production.yaml feature/deployment
+  workie begin feature/deployment --config .workie-production.yaml
 
   # Work silently for automated scripts
-  workie --quiet feature/ci-pipeline
+  workie begin feature/ci-pipeline --quiet
 
   # Debug environment setup with detailed output
-  workie --verbose feature/complex-setup`,
-	Args: cobra.MaximumNArgs(1),
+  workie begin feature/complex-setup --verbose`,
+	Args: cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Handle version flag
 		if versionFlag {
@@ -120,19 +120,9 @@ Configuration example:
 			return
 		}
 
-		// If no arguments are provided, show help instead of creating worktree
-		if len(args) == 0 {
-			if err := cmd.Help(); err != nil {
-				fmt.Fprintf(os.Stderr, "Error displaying help: %v\n", err)
-			}
-			return
-		}
-
-		// Run the main workflow with provided branch name
-		branchName := args[0]
-		if err := wm.Run(branchName); err != nil {
-			fmt.Fprintf(os.Stderr, "❌ Error: %v\n", err)
-			os.Exit(1)
+		// If no arguments and no flags, show help
+		if err := cmd.Help(); err != nil {
+			fmt.Fprintf(os.Stderr, "Error displaying help: %v\n", err)
 		}
 	},
 }
