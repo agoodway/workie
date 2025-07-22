@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or Discussion
+    url: https://github.com/goodway/workie/discussions
+    about: Ask questions and discuss ideas with the community
+  - name: Security Issue
+    url: mailto:security@goodway.com
+    about: Report security vulnerabilities privately

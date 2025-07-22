@@ -1,0 +1,222 @@
+# CI/CD Workflow Examples
+# This file demonstrates common CI/CD patterns that can be used with workie
+
+name: "CI/CD Workflows"
+description: "Common continuous integration and deployment patterns"
+
+# Environment variables for CI/CD
+env:
+  NODE_ENV: "test"
+  CI: "true"
+  COVERAGE_THRESHOLD: "80"
+
+# CI Pipeline tasks
+ci:
+  install:
+    description: "Install dependencies (CI optimized)"
+    commands:
+      - "npm ci --only=production"
+  
+  lint:
+    description: "Run code quality checks"
+    commands:
+      - "npm run lint"
+      - "npm run format:check"
+      - "npm run type-check"
+  
+  test:unit:
+    description: "Run unit tests"
+    commands:
+      - "npm run test:unit -- --coverage --ci"
+  
+  test:integration:
+    description: "Run integration tests"
+    commands:
+      - "npm run test:integration -- --ci"
+  
+  test:e2e:
+    description: "Run end-to-end tests"
+    commands:
+      - "npm run test:e2e -- --headless"
+  
+  security:
+    description: "Run security checks"
+    commands:
+      - "npm audit --audit-level moderate"
+      - "npm run check:licenses"
+  
+  build:
+    description: "Build for production"
+    commands:
+      - "npm run build"
+      - "npm run build:analyze"
+  
+  coverage:
+    description: "Check test coverage"
+    commands:
+      - "npm run coverage:check"
+      - "npm run coverage:upload"
+
+# CD Pipeline tasks
+cd:
+  deploy:staging:
+    description: "Deploy to staging environment"
+    commands:
+      - "npm run deploy:staging"
+      - "npm run smoke:test:staging"
+    depends_on: ["ci:build"]
+  
+  deploy:production:
+    description: "Deploy to production"
+    commands:
+      - "npm run deploy:production"
+      - "npm run smoke:test:production"
+    depends_on: ["cd:deploy:staging"]
+  
+  rollback:
+    description: "Rollback deployment"
+    commands:
+      - "npm run deploy:rollback"
+
+# GitHub Actions integration
+github_actions:
+  ci:
+    description: "Full CI pipeline"
+    commands:
+      - "workie run ci:install"
+      - "workie run ci:lint"
+      - "workie run ci:security"
+      - "workie run ci:test:unit"
+      - "workie run ci:test:integration"
+      - "workie run ci:build"
+      - "workie run ci:coverage"
+  
+  cd:
+    description: "Full CD pipeline"
+    commands:
+      - "workie run cd:deploy:staging"
+      - "workie run cd:deploy:production"
+
+# GitLab CI integration
+gitlab_ci:
+  test:
+    description: "GitLab CI test stage"
+    commands:
+      - "workie run ci:install"
+      - "workie run ci:lint"
+      - "workie run ci:test:unit"
+  
+  build:
+    description: "GitLab CI build stage"
+    commands:
+      - "workie run ci:build"
+  
+  deploy:
+    description: "GitLab CI deploy stage"
+    commands:
+      - "workie run cd:deploy:staging"
+
+# Custom workflows
+workflows:
+  pr:check:
+    description: "Pull request validation"
+    commands:
+      - "workie run ci:lint"
+      - "workie run ci:test:unit"
+      - "workie run ci:build"
+  
+  nightly:
+    description: "Nightly build and test"
+    commands:
+      - "workie run ci:install"
+      - "workie run ci:test:unit"
+      - "workie run ci:test:integration"
+      - "workie run ci:test:e2e"
+      - "workie run ci:security"
+  
+  release:
+    description: "Release workflow"
+    commands:
+      - "npm run version:bump"
+      - "npm run changelog:generate"
+      - "workie run ci:build"
+      - "npm run package"
+      - "npm publish"
+
+# Environment-specific configurations
+environments:
+  ci:
+    env:
+      NODE_ENV: "test"
+      CI: "true"
+      HEADLESS: "true"
+  
+  staging:
+    env:
+      NODE_ENV: "staging"
+      API_URL: "https://api-staging.example.com"
+  
+  production:
+    env:
+      NODE_ENV: "production"
+      API_URL: "https://api.example.com"
+
+# Monitoring and notifications
+monitoring:
+  health:check:
+    description: "Health check for deployed services"
+    commands:
+      - "curl -f $API_URL/health"
+      - "curl -f $API_URL/metrics"
+  
+  notify:success:
+    description: "Notify deployment success"
+    commands:
+      - "slack-notify 'Deployment successful!'"
+      - "email-notify deployment-success"
+  
+  notify:failure:
+    description: "Notify deployment failure"
+    commands:
+      - "slack-notify 'Deployment failed!'"
+      - "email-notify deployment-failure"
+      - "pagerduty-alert deployment-failure"
+
+# Documentation
+docs:
+  ci_cd: |
+    ## CI/CD Integration
+    
+    ### GitHub Actions
+    ```yaml
+    - name: Run CI Pipeline
+      run: workie run github_actions:ci
+    
+    - name: Deploy
+      run: workie run github_actions:cd
+    ```
+    
+    ### GitLab CI
+    ```yaml
+    test:
+      script:
+        - workie run gitlab_ci:test
+    
+    build:
+      script:
+        - workie run gitlab_ci:build
+    
+    deploy:
+      script:
+        - workie run gitlab_ci:deploy
+    ```
+    
+    ### Local Testing
+    ```bash
+    # Test CI pipeline locally
+    workie run github_actions:ci
+    
+    # Test specific stages
+    workie run ci:lint
+    workie run ci:test:unit
+    ```

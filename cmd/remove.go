@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"workie/manager"
+	"github.com/agoodway/workie/manager"
 
 	"github.com/spf13/cobra"
 )
@@ -181,11 +181,11 @@ func checkWorktreeStatus(wm *manager.WorktreeManager, worktreePath string) error
 
 func executeWorktreeRemove(wm *manager.WorktreeManager, worktreePath string) error {
 	args := []string{"worktree", "remove"}
-	
+
 	if forceRemove {
 		args = append(args, "--force")
 	}
-	
+
 	args = append(args, worktreePath)
 
 	if wm.Options.Verbose {
@@ -223,7 +223,7 @@ func removeBranch(wm *manager.WorktreeManager, branchName string) error {
 	// First check if branch exists locally
 	cmd := exec.Command("git", "show-ref", "--verify", "--quiet", fmt.Sprintf("refs/heads/%s", branchName))
 	cmd.Dir = wm.RepoPath
-	
+
 	if cmd.Run() != nil {
 		// Branch doesn't exist locally, nothing to remove
 		if wm.Options.Verbose {

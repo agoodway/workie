@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"workie/manager"
+	"github.com/agoodway/workie/manager"
 
 	"github.com/spf13/cobra"
 )
@@ -201,7 +201,7 @@ func printVersion() {
 	}
 	fmt.Printf("\n")
 	fmt.Printf("An intelligent Git worktree manager evolving into a comprehensive coding assistant.\n")
-	fmt.Printf("Learn more: https://github.com/yourusername/workie\n")
+	fmt.Printf("Learn more: https://github.com/agoodway/workie\n")
 }
 
 func init() {

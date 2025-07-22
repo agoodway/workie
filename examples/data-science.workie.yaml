@@ -1,0 +1,213 @@
+# Sample .workie.yaml for a Data Science Project
+# This configuration demonstrates data science and ML workflows
+
+name: "Data Science Project"
+description: "A machine learning project with Jupyter notebooks and Python analysis"
+
+# Environment variables
+env:
+  PYTHONPATH: "src"
+  JUPYTER_CONFIG_DIR: ".jupyter"
+  DATA_DIR: "data"
+  MODELS_DIR: "models"
+  MLFLOW_TRACKING_URI: "file:./mlruns"
+
+# Dependencies
+dependencies:
+  - name: "python"
+    version: "3.10"
+  
+  - name: "jupyter"
+    version: "latest"
+
+# Development tasks
+tasks:
+  setup:
+    description: "Set up data science environment"
+    commands:
+      - "python -m venv venv"
+      - "source venv/bin/activate && pip install --upgrade pip"
+      - "source venv/bin/activate && pip install -r requirements.txt"
+      - "source venv/bin/activate && python -m ipykernel install --user --name=ds-project"
+  
+  install:
+    description: "Install Python packages"
+    commands:
+      - "source venv/bin/activate && pip install -r requirements.txt"
+  
+  jupyter:
+    description: "Start Jupyter Lab"
+    commands:
+      - "source venv/bin/activate && jupyter lab --ip=0.0.0.0 --port=8888"
+    depends_on: ["install"]
+  
+  notebook:
+    description: "Start Jupyter Notebook"
+    commands:
+      - "source venv/bin/activate && jupyter notebook --ip=0.0.0.0 --port=8888"
+    depends_on: ["install"]
+  
+  data:download:
+    description: "Download datasets"
+    commands:
+      - "python scripts/download_data.py"
+      - "python scripts/validate_data.py"
+  
+  data:clean:
+    description: "Clean and preprocess data"
+    commands:
+      - "python scripts/clean_data.py"
+      - "python scripts/feature_engineering.py"
+  
+  data:explore:
+    description: "Run exploratory data analysis"
+    commands:
+      - "python scripts/eda.py"
+      - "python scripts/generate_report.py"
+  
+  train:
+    description: "Train machine learning models"
+    commands:
+      - "python src/train.py --config configs/train.yaml"
+  
+  evaluate:
+    description: "Evaluate model performance"
+    commands:
+      - "python src/evaluate.py --model-path models/latest.pkl"
+  
+  predict:
+    description: "Generate predictions"
+    commands:
+      - "python src/predict.py --input data/test.csv --output predictions.csv"
+  
+  test:
+    description: "Run tests"
+    commands:
+      - "source venv/bin/activate && pytest tests/ -v"
+      - "source venv/bin/activate && pytest tests/ --cov=src"
+  
+  lint:
+    description: "Run code quality checks"
+    commands:
+      - "source venv/bin/activate && flake8 src/ tests/"
+      - "source venv/bin/activate && black --check src/ tests/"
+      - "source venv/bin/activate && isort --check-only src/ tests/"
+  
+  format:
+    description: "Format code"
+    commands:
+      - "source venv/bin/activate && black src/ tests/ scripts/"
+      - "source venv/bin/activate && isort src/ tests/ scripts/"
+  
+  mlflow:
+    description: "Start MLflow UI"
+    commands:
+      - "source venv/bin/activate && mlflow ui --port 5000"
+  
+  serve:
+    description: "Serve model API"
+    commands:
+      - "source venv/bin/activate && python src/api.py"
+    depends_on: ["install"]
+
+# File watching
+watch:
+  - pattern: "**/*.py"
+    tasks: ["lint"]
+  - pattern: "**/*.ipynb"
+    tasks: ["notebook:validate"]
+  - pattern: "data/**/*"
+    tasks: ["data:validate"]
+
+# Git hooks
+hooks:
+  pre-commit:
+    - "workie run lint"
+    - "workie run test"
+    - "jupyter nbconvert --clear-output --inplace notebooks/*.ipynb"
+
+# Custom scripts
+scripts:
+  notebook:clean:
+    description: "Clean notebook outputs"
+    commands:
+      - "jupyter nbconvert --clear-output --inplace notebooks/*.ipynb"
+  
+  notebook:validate:
+    description: "Validate notebooks"
+    commands:
+      - "source venv/bin/activate && nbqa flake8 notebooks/"
+      - "source venv/bin/activate && nbqa black notebooks/"
+  
+  data:validate:
+    description: "Validate data quality"
+    commands:
+      - "python scripts/validate_data.py"
+      - "python scripts/data_quality_report.py"
+  
+  model:package:
+    description: "Package model for deployment"
+    commands:
+      - "python scripts/package_model.py"
+      - "docker build -t ml-model ."
+  
+  experiment:run:
+    description: "Run full ML experiment"
+    commands:
+      - "workie run data:clean"
+      - "workie run train"
+      - "workie run evaluate"
+      - "python scripts/log_experiment.py"
+
+# Environment management
+environments:
+  development:
+    env:
+      DEBUG: "True"
+      LOG_LEVEL: "DEBUG"
+  
+  production:
+    env:
+      DEBUG: "False"
+      LOG_LEVEL: "INFO"
+      MODEL_PATH: "models/production.pkl"
+
+# Documentation
+docs:
+  setup: |
+    ## Data Science Project Setup
+    
+    1. Set up environment: `workie run setup`
+    2. Download data: `workie run data:download`
+    3. Start Jupyter Lab: `workie run jupyter`
+    
+    Access Jupyter Lab at http://localhost:8888
+    MLflow UI at http://localhost:5000
+  
+  workflow: |
+    ## Data Science Workflow
+    
+    1. **Data Preparation**:
+       - Download: `workie run data:download`
+       - Clean: `workie run data:clean`
+       - Explore: `workie run data:explore`
+    
+    2. **Model Development**:
+       - Train: `workie run train`
+       - Evaluate: `workie run evaluate`
+       - Experiment: `workie run experiment:run`
+    
+    3. **Model Deployment**:
+       - Package: `workie run model:package`
+       - Serve: `workie run serve`
+  
+  notebooks: |
+    ## Notebook Management
+    
+    - Clean outputs: `workie run notebook:clean`
+    - Validate code: `workie run notebook:validate`
+    
+    **Best Practices**:
+    - Always clean outputs before committing
+    - Use meaningful cell tags for organization
+    - Keep notebooks focused and well-documented

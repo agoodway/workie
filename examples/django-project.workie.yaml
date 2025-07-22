@@ -1,0 +1,141 @@
+# Sample .workie.yaml for a Django Project
+# This configuration demonstrates Python/Django development patterns
+
+name: "Django API"
+description: "A Django REST API with PostgreSQL database"
+
+# Environment variables
+env:
+  DJANGO_SETTINGS_MODULE: "myproject.settings.development"
+  DEBUG: "True"
+  DATABASE_URL: "postgresql://localhost:5432/django_dev"
+  REDIS_URL: "redis://localhost:6379/0"
+
+# Python dependencies
+dependencies:
+  - name: "python"
+    version: "3.11"
+  
+  - name: "postgresql"
+    version: "14"
+  
+  - name: "redis"
+    version: "7"
+
+# Development tasks
+tasks:
+  setup:
+    description: "Set up development environment"
+    commands:
+      - "python -m venv venv"
+      - "source venv/bin/activate && pip install -r requirements.txt"
+      - "source venv/bin/activate && pip install -r requirements-dev.txt"
+  
+  install:
+    description: "Install dependencies"
+    commands:
+      - "source venv/bin/activate && pip install -r requirements.txt"
+  
+  migrate:
+    description: "Run database migrations"
+    commands:
+      - "source venv/bin/activate && python manage.py migrate"
+  
+  makemigrations:
+    description: "Create new migrations"
+    commands:
+      - "source venv/bin/activate && python manage.py makemigrations"
+  
+  dev:
+    description: "Start development server"
+    commands:
+      - "source venv/bin/activate && python manage.py runserver"
+    depends_on: ["install"]
+  
+  shell:
+    description: "Open Django shell"
+    commands:
+      - "source venv/bin/activate && python manage.py shell"
+  
+  test:
+    description: "Run tests"
+    commands:
+      - "source venv/bin/activate && python manage.py test"
+      - "source venv/bin/activate && coverage run --source='.' manage.py test"
+      - "source venv/bin/activate && coverage report"
+  
+  lint:
+    description: "Run code quality checks"
+    commands:
+      - "source venv/bin/activate && flake8 ."
+      - "source venv/bin/activate && black --check ."
+      - "source venv/bin/activate && isort --check-only ."
+  
+  format:
+    description: "Format code"
+    commands:
+      - "source venv/bin/activate && black ."
+      - "source venv/bin/activate && isort ."
+  
+  collectstatic:
+    description: "Collect static files"
+    commands:
+      - "source venv/bin/activate && python manage.py collectstatic --noinput"
+  
+  createsuperuser:
+    description: "Create Django superuser"
+    commands:
+      - "source venv/bin/activate && python manage.py createsuperuser"
+  
+  db:reset:
+    description: "Reset database"
+    commands:
+      - "dropdb django_dev --if-exists"
+      - "createdb django_dev"
+      - "workie run migrate"
+      - "workie run createsuperuser"
+
+# File watching
+watch:
+  - pattern: "**/*.py"
+    tasks: ["lint"]
+  - pattern: "**/models.py"
+    tasks: ["makemigrations"]
+
+# Git hooks
+hooks:
+  pre-commit:
+    - "workie run lint"
+    - "workie run test"
+
+# Custom scripts
+scripts:
+  load-fixtures:
+    description: "Load test fixtures"
+    commands:
+      - "source venv/bin/activate && python manage.py loaddata fixtures/*.json"
+  
+  backup-db:
+    description: "Backup database"
+    commands:
+      - "pg_dump django_dev > backup_$(date +%Y%m%d_%H%M%S).sql"
+
+# Documentation
+docs:
+  setup: |
+    ## Django Project Setup
+    
+    1. Set up virtual environment: `workie run setup`
+    2. Run migrations: `workie run migrate`
+    3. Create superuser: `workie run createsuperuser`
+    4. Start development: `workie run dev`
+    
+    Admin interface: http://localhost:8000/admin/
+    API endpoints: http://localhost:8000/api/
+  
+  testing: |
+    ## Testing
+    
+    - Run tests: `workie run test`
+    - Check coverage: View coverage report after running tests
+    - Load test data: `workie run load-fixtures`

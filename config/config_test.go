@@ -63,7 +63,7 @@ func TestLoadConfig(t *testing.T) {
 	t.Run("valid workie.yaml (fallback)", func(t *testing.T) {
 		// Clean up any existing .workie.yaml to test fallback
 		os.Remove(filepath.Join(tempDir, ".workie.yaml"))
-		
+
 		configContent := `files_to_copy:
   - README.md`
 
@@ -325,4 +325,3 @@ hooks:
 		}
 	})
 }
-

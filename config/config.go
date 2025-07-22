@@ -13,7 +13,7 @@ import (
 type Hooks struct {
 	PostCreate     []string `yaml:"post_create"`
 	PreRemove      []string `yaml:"pre_remove"`
-	PostCd         []string `yaml:"post_cd"`         // Commands to run after changing directory to worktree
+	PostCd         []string `yaml:"post_cd"`                   // Commands to run after changing directory to worktree
 	TimeoutMinutes int      `yaml:"timeout_minutes,omitempty"` // Hook execution timeout in minutes (default: 5)
 }
 
@@ -91,7 +91,7 @@ func LoadConfig(repoRoot string, customConfigPath string) (*Config, error) {
 		if !filepath.IsAbs(customConfigPath) {
 			customPath = filepath.Join(repoRoot, customConfigPath)
 		}
-		
+
 		if info, err := os.Stat(customPath); err != nil {
 			if os.IsNotExist(err) {
 				return nil, fmt.Errorf("custom config file not found: %s (resolved to: %s)", customConfigPath, customPath)
@@ -103,7 +103,7 @@ func LoadConfig(repoRoot string, customConfigPath string) (*Config, error) {
 		} else if info.IsDir() {
 			return nil, fmt.Errorf("custom config path is a directory, not a file: %s", customConfigPath)
 		}
-		
+
 		return nil, fmt.Errorf("custom config file not found: %s", customConfigPath)
 	}
 

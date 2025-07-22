@@ -1,0 +1,220 @@
+# Sample .workie.yaml for Docker Compose Development
+# This configuration demonstrates containerized development workflows
+
+name: "Dockerized Application"
+description: "A multi-service application using Docker Compose"
+
+# Environment variables
+env:
+  COMPOSE_PROJECT_NAME: "myapp"
+  DOCKER_BUILDKIT: "1"
+  DATABASE_URL: "postgresql://postgres:password@localhost:5432/myapp_dev"
+  REDIS_URL: "redis://localhost:6379"
+
+# Dependencies
+dependencies:
+  - name: "docker"
+    version: "latest"
+  
+  - name: "docker-compose"
+    version: "latest"
+
+# Development tasks
+tasks:
+  up:
+    description: "Start all services"
+    commands:
+      - "docker-compose up -d"
+  
+  down:
+    description: "Stop all services"
+    commands:
+      - "docker-compose down"
+  
+  build:
+    description: "Build all Docker images"
+    commands:
+      - "docker-compose build"
+  
+  rebuild:
+    description: "Rebuild and restart services"
+    commands:
+      - "docker-compose down"
+      - "docker-compose build --no-cache"
+      - "docker-compose up -d"
+  
+  logs:
+    description: "View logs from all services"
+    commands:
+      - "docker-compose logs -f"
+  
+  logs:app:
+    description: "View application logs"
+    commands:
+      - "docker-compose logs -f app"
+  
+  logs:db:
+    description: "View database logs"
+    commands:
+      - "docker-compose logs -f db"
+  
+  shell:app:
+    description: "Shell into app container"
+    commands:
+      - "docker-compose exec app sh"
+  
+  shell:db:
+    description: "Connect to database"
+    commands:
+      - "docker-compose exec db psql -U postgres myapp_dev"
+  
+  test:
+    description: "Run tests in container"
+    commands:
+      - "docker-compose exec app npm test"
+  
+  migrate:
+    description: "Run database migrations"
+    commands:
+      - "docker-compose exec app npm run migrate"
+  
+  seed:
+    description: "Seed database with test data"
+    commands:
+      - "docker-compose exec app npm run seed"
+  
+  reset:
+    description: "Reset entire environment"
+    commands:
+      - "docker-compose down -v"
+      - "docker-compose build --no-cache"
+      - "docker-compose up -d"
+      - "sleep 10"
+      - "workie run migrate"
+      - "workie run seed"
+  
+  clean:
+    description: "Clean up Docker resources"
+    commands:
+      - "docker-compose down -v --remove-orphans"
+      - "docker system prune -f"
+      - "docker volume prune -f"
+  
+  ps:
+    description: "Show running containers"
+    commands:
+      - "docker-compose ps"
+  
+  stats:
+    description: "Show container resource usage"
+    commands:
+      - "docker stats"
+
+# Production tasks
+production:
+  deploy:
+    description: "Deploy to production"
+    commands:
+      - "docker-compose -f docker-compose.prod.yml build"
+      - "docker-compose -f docker-compose.prod.yml up -d"
+  
+  backup:
+    description: "Backup production database"
+    commands:
+      - "docker-compose -f docker-compose.prod.yml exec db pg_dump -U postgres myapp > backup_$(date +%Y%m%d_%H%M%S).sql"
+
+# File watching (for development)
+watch:
+  - pattern: "docker-compose.yml"
+    tasks: ["build", "up"]
+  - pattern: "Dockerfile"
+    tasks: ["build"]
+  - pattern: "package.json"
+    tasks: ["build"]
+
+# Custom scripts
+scripts:
+  dev:setup:
+    description: "Complete development setup"
+    commands:
+      - "cp .env.example .env"
+      - "workie run build"
+      - "workie run up"
+      - "sleep 15"
+      - "workie run migrate"
+      - "workie run seed"
+      - "echo 'Development environment ready!'"
+  
+  health:
+    description: "Check service health"
+    commands:
+      - "curl -f http://localhost:3000/health || echo 'App not healthy'"
+      - "docker-compose exec db pg_isready -U postgres || echo 'DB not ready'"
+      - "redis-cli -h localhost -p 6379 ping || echo 'Redis not ready'"
+  
+  update:
+    description: "Update all services"
+    commands:
+      - "docker-compose pull"
+      - "docker-compose build --pull"
+      - "workie run down"
+      - "workie run up"
+
+# Environment configurations
+environments:
+  development:
+    compose_file: "docker-compose.yml"
+    env:
+      NODE_ENV: "development"
+      LOG_LEVEL: "debug"
+  
+  staging:
+    compose_file: "docker-compose.staging.yml"
+    env:
+      NODE_ENV: "staging"
+      LOG_LEVEL: "info"
+  
+  production:
+    compose_file: "docker-compose.prod.yml"
+    env:
+      NODE_ENV: "production"
+      LOG_LEVEL: "warn"
+
+# Documentation
+docs:
+  setup: |
+    ## Docker Development Setup
+    
+    1. Copy environment file: `cp .env.example .env`
+    2. Start services: `workie run up`
+    3. Run migrations: `workie run migrate`
+    4. Seed data: `workie run seed`
+    
+    Services will be available at:
+    - App: http://localhost:3000
+    - Database: localhost:5432
+    - Redis: localhost:6379
+  
+  services: |
+    ## Service Management
+    
+    - Start all: `workie run up`
+    - Stop all: `workie run down`
+    - View logs: `workie run logs`
+    - Rebuild: `workie run rebuild`
+    - Clean up: `workie run clean`
+  
+  troubleshooting: |
+    ## Troubleshooting
+    
+    ### Port conflicts:
+    - Check running services: `workie run ps`
+    - Kill conflicting processes: `sudo lsof -t -i:3000 | xargs kill`
+    
+    ### Container issues:
+    - Reset environment: `workie run reset`
+    - Clean Docker cache: `workie run clean`
+    
+    ### Database issues:
+    - Connect to DB: `workie run shell:db`
+    - Check DB logs: `workie run logs:db`

@@ -1,5 +1,10 @@
 # Workie - Agentic Coding Assistant CLI
 
+[![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://golang.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Go Report Card](https://goreportcard.com/badge/github.com/agoodway/workie)](https://goreportcard.com/report/github.com/agoodway/workie)
+[![GitHub release](https://img.shields.io/github/release/agoodway/workie.svg)](https://github.com/agoodway/workie/releases/latest)
+
 A comprehensive developer assistant that streamlines your coding workflow. Starting with advanced Git worktree management, Workie is evolving into an intelligent coding companion powered by AI agents to automate common development tasks and boost your productivity.
 
 ## Vision
@@ -49,7 +54,7 @@ go install .
 ### Direct Installation
 
 ```bash
-go install github.com/yourusername/workie@latest
+go install github.com/agoodway/workie@latest
 ```
 
 ## Usage
@@ -509,8 +514,26 @@ Workie is evolving beyond Git worktree management into a comprehensive agentic c
 
 ## License
 
-[Your chosen license]
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Contributing
 
-[Your contribution guidelines]
+We welcome contributions! Please read our [Contributing Guide](CONTRIBUTING.md) for details on:
+
+- How to set up your development environment
+- Our code style and standards
+- The pull request process
+- How to report issues
+
+For major changes, please open an issue first to discuss what you would like to change.
+
+### Quick Start for Contributors
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes and add tests
+4. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+5. Push to the branch (`git push origin feature/amazing-feature`)
+6. Open a Pull Request
+
+See our [Contributing Guide](CONTRIBUTING.md) for detailed instructions.

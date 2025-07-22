@@ -1,11 +1,11 @@
 package manager
 
 import (
+	"github.com/agoodway/workie/config"
 	"os"
 	"strings"
 	"testing"
 	"time"
-	"workie/config"
 )
 
 // TestExecuteHooks tests hook execution logic with various scenarios
@@ -22,7 +22,7 @@ func TestExecuteHooks(t *testing.T) {
 		wm.Config = &config.Config{
 			Hooks: &config.Hooks{},
 		}
-		
+
 		err := wm.ExecuteHooks([]string{}, tempDir, "post_create")
 		if err != nil {
 			t.Errorf("Expected no error for empty hooks, got: %v", err)
@@ -35,7 +35,7 @@ func TestExecuteHooks(t *testing.T) {
 		wm.Config = &config.Config{
 			Hooks: &config.Hooks{},
 		}
-		
+
 		// Use echo command which should be available on all systems
 		hooks := []string{"echo 'test successful'"}
 		err := wm.ExecuteHooks(hooks, tempDir, "post_create")
@@ -50,7 +50,7 @@ func TestExecuteHooks(t *testing.T) {
 		wm.Config = &config.Config{
 			Hooks: &config.Hooks{},
 		}
-		
+
 		hooks := []string{"nonexistent-command-12345"}
 		err := wm.ExecuteHooks(hooks, tempDir, "post_create")
 		// Note: We don't expect ExecuteHooks to fail completely for individual command failures
@@ -67,7 +67,7 @@ func TestExecuteHooks(t *testing.T) {
 		wm.Config = &config.Config{
 			Hooks: &config.Hooks{},
 		}
-		
+
 		hooks := []string{
 			"echo 'first command success'",
 			"nonexistent-command-12345",
@@ -86,7 +86,7 @@ func TestExecuteHooks(t *testing.T) {
 		wm.Config = &config.Config{
 			Hooks: &config.Hooks{},
 		}
-		
+
 		hooks := []string{
 			"nonexistent-command-1",
 			"nonexistent-command-2",
@@ -106,7 +106,7 @@ func TestExecuteHooks(t *testing.T) {
 		wm.Config = &config.Config{
 			Hooks: &config.Hooks{},
 		}
-		
+
 		invalidDir := "/nonexistent/directory/path"
 		hooks := []string{"echo 'test'"}
 		err := wm.ExecuteHooks(hooks, invalidDir, "post_create")
@@ -126,19 +126,19 @@ func TestExecuteHooks(t *testing.T) {
 				TimeoutMinutes: 1, // Very short timeout for testing
 			},
 		}
-		
+
 		// Command that sleeps longer than timeout
 		hooks := []string{"sleep 65"} // 65 seconds > 1 minute timeout
-		
+
 		start := time.Now()
 		err := wm.ExecuteHooks(hooks, tempDir, "post_create")
 		duration := time.Since(start)
-		
+
 		// Should timeout within reasonable bounds (not wait full 65 seconds)
 		if duration > 70*time.Second {
 			t.Errorf("Hook execution took too long: %v (expected timeout around 1 minute)", duration)
 		}
-		
+
 		// Should not completely fail execution due to timeout
 		if err != nil {
 			t.Log("Hook execution failed due to timeout, which may be expected behavior")
@@ -151,7 +151,7 @@ func TestExecuteHooks(t *testing.T) {
 		wm.Config = &config.Config{
 			Hooks: &config.Hooks{},
 		}
-		
+
 		// Include empty command in the list
 		hooks := []string{
 			"echo 'before empty'",
@@ -174,7 +174,7 @@ func TestHasHooks(t *testing.T) {
 				PostCreate: []string{"echo 'test'"},
 			},
 		}
-		
+
 		if !wm.HasPostCreateHooks() {
 			t.Error("Expected HasPostCreateHooks to return true")
 		}
@@ -185,7 +185,7 @@ func TestHasHooks(t *testing.T) {
 		wm.Config = &config.Config{
 			Hooks: &config.Hooks{},
 		}
-		
+
 		if wm.HasPostCreateHooks() {
 			t.Error("Expected HasPostCreateHooks to return false")
 		}
@@ -198,7 +198,7 @@ func TestHasHooks(t *testing.T) {
 				PreRemove: []string{"echo 'cleanup'"},
 			},
 		}
-		
+
 		if !wm.HasPreRemoveHooks() {
 			t.Error("Expected HasPreRemoveHooks to return true")
 		}
@@ -207,7 +207,7 @@ func TestHasHooks(t *testing.T) {
 	t.Run("no config at all", func(t *testing.T) {
 		wm := New()
 		wm.Config = nil
-		
+
 		if wm.HasPostCreateHooks() {
 			t.Error("Expected HasPostCreateHooks to return false when config is nil")
 		}
@@ -224,7 +224,7 @@ func TestHookTimeout(t *testing.T) {
 		wm.Config = &config.Config{
 			Hooks: &config.Hooks{},
 		}
-		
+
 		// Use reflection or indirect testing since getHookTimeout is not exported
 		// We'll test via ExecuteHooks with a command that should complete within default timeout
 		wm.Options.Quiet = true
@@ -242,7 +242,7 @@ func TestHookTimeout(t *testing.T) {
 				TimeoutMinutes: 10, // Custom timeout
 			},
 		}
-		
+
 		wm.Options.Quiet = true
 		hooks := []string{"echo 'custom timeout test'"}
 		err := wm.ExecuteHooks(hooks, "/tmp", "test")
@@ -251,4 +251,3 @@ func TestHookTimeout(t *testing.T) {
 		}
 	})
 }
-

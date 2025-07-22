@@ -1,0 +1,116 @@
+# Sample .workie.yaml for a Web Application Project
+# This configuration demonstrates common patterns for web development
+
+name: "My Web App"
+description: "A modern web application with React frontend and Node.js backend"
+
+# Environment variables
+env:
+  NODE_ENV: development
+  PORT: 3000
+  DATABASE_URL: postgresql://localhost:5432/myapp_dev
+
+# Development dependencies
+dependencies:
+  # Frontend
+  - name: "node"
+    version: "18"
+    package_manager: "npm"
+  
+  # Database
+  - name: "postgresql"
+    version: "14"
+  
+  # Cache
+  - name: "redis"
+    version: "7"
+
+# Common development tasks
+tasks:
+  install:
+    description: "Install all dependencies"
+    commands:
+      - "npm install"
+      - "cd client && npm install"
+  
+  dev:
+    description: "Start development servers"
+    commands:
+      - "npm run dev:server &"
+      - "cd client && npm start"
+    depends_on: ["install"]
+  
+  build:
+    description: "Build for production"
+    commands:
+      - "cd client && npm run build"
+      - "npm run build:server"
+    depends_on: ["install"]
+  
+  test:
+    description: "Run all tests"
+    commands:
+      - "npm test"
+      - "cd client && npm test -- --coverage"
+    depends_on: ["install"]
+  
+  lint:
+    description: "Run linting and formatting"
+    commands:
+      - "npm run lint"
+      - "npm run format"
+      - "cd client && npm run lint"
+      - "cd client && npm run format"
+  
+  db:setup:
+    description: "Set up database"
+    commands:
+      - "createdb myapp_dev"
+      - "npm run migrate"
+      - "npm run seed"
+  
+  db:reset:
+    description: "Reset database"
+    commands:
+      - "dropdb myapp_dev --if-exists"
+      - "workie run db:setup"
+
+# File watching patterns
+watch:
+  - pattern: "**/*.js"
+    tasks: ["lint"]
+  - pattern: "**/*.jsx"
+    tasks: ["lint"]
+  - pattern: "**/*.ts"
+    tasks: ["lint"]
+  - pattern: "**/*.tsx"
+    tasks: ["lint"]
+
+# Git hooks integration
+hooks:
+  pre-commit:
+    - "workie run lint"
+    - "workie run test"
+  
+  pre-push:
+    - "workie run build"
+    - "workie run test"
+
+# Documentation
+docs:
+  setup: |
+    ## Getting Started
+    
+    1. Install dependencies: `workie run install`
+    2. Set up database: `workie run db:setup`
+    3. Start development: `workie run dev`
+    
+    The app will be available at http://localhost:3000
+  
+  deployment: |
+    ## Deployment
+    
+    1. Build the application: `workie run build`
+    2. Set production environment variables
+    3. Run database migrations: `npm run migrate:prod`
+    4. Start the server: `npm start`

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"workie/config"
+	"github.com/agoodway/workie/config"
 )
 
 // Options holds configuration options for the WorktreeManager
@@ -306,9 +306,9 @@ func (wm *WorktreeManager) copyConfiguredFiles(worktreePath string) error {
 
 		if srcInfo.IsDir() {
 			wm.printf("   📁 Copying directory: %s\n", item)
-		if wm.Options.Verbose {
-			wm.printf("     From → To: %s → %s\n", srcPath, dstPath)
-		}
+			if wm.Options.Verbose {
+				wm.printf("     From → To: %s → %s\n", srcPath, dstPath)
+			}
 			if err := wm.copyDirectory(srcPath, dstPath); err != nil {
 				errorMsg := fmt.Sprintf("Failed to copy directory %s from %s to %s: %v", item, srcPath, dstPath, err)
 				fmt.Printf("❌ Error: %s\n", errorMsg)
@@ -389,11 +389,11 @@ func (wm *WorktreeManager) CreateWorktreeBranch(branchName string) error {
 
 	cmd := exec.Command("git", "worktree", "add", "-b", branchName, worktreePath)
 	cmd.Dir = wm.RepoPath
-	
+
 	// Capture both stdout and stderr for better error reporting
 	var stderr strings.Builder
 	cmd.Stderr = &stderr
-	
+
 	if err := cmd.Run(); err != nil {
 		stderrStr := stderr.String()
 		if _, ok := err.(*exec.ExitError); ok {
@@ -414,10 +414,10 @@ func (wm *WorktreeManager) CreateWorktreeBranch(branchName string) error {
 
 	wm.printf("✓ Git worktree created successfully\n")
 
-// Copy configured files to the new worktree
-if err := wm.copyConfiguredFiles(worktreePath); err != nil {
-    return fmt.Errorf("failed to copy configured files: %w", err)
-}
+	// Copy configured files to the new worktree
+	if err := wm.copyConfiguredFiles(worktreePath); err != nil {
+		return fmt.Errorf("failed to copy configured files: %w", err)
+	}
 
 	// Execute post_create hooks if configured
 	if wm.HasPostCreateHooks() {
@@ -436,7 +436,7 @@ if err := wm.copyConfiguredFiles(worktreePath); err != nil {
 	fmt.Printf("✅ Successfully created worktree:\n")
 	fmt.Printf("   Branch: %s\n", branchName)
 	fmt.Printf("   Path: %s\n", worktreePath)
-	
+
 	// Show file copy summary
 	if wm.Config.HasFilesToCopy() {
 		totalConfiguredFiles := len(wm.Config.FilesToCopy)
@@ -447,18 +447,18 @@ if err := wm.copyConfiguredFiles(worktreePath); err != nil {
 	} else {
 		fmt.Printf("   Files copied to worktree: None (no files configured)\n")
 	}
-	
+
 	// Handle auto_cd configuration and post_cd hooks
 	if wm.Config.AutoCd {
 		wm.printf("\n🔄 Auto-changing directory to worktree...\n")
-		
+
 		// Change to the worktree directory
 		if err := os.Chdir(worktreePath); err != nil {
 			fmt.Printf("⚠️  Warning: Failed to change to worktree directory: %v\n", err)
 			fmt.Printf("   You can manually change with: cd %s\n", worktreePath)
 		} else {
 			wm.printf("✓ Changed to worktree directory: %s\n", worktreePath)
-			
+
 			// Execute post_cd hooks if configured
 			if wm.HasPostCdHooks() {
 				if err := wm.ExecuteHooks(wm.Config.Hooks.PostCd, worktreePath, "post_cd"); err != nil {
@@ -491,10 +491,10 @@ if err := wm.copyConfiguredFiles(worktreePath); err != nil {
 func (wm *WorktreeManager) ListWorktrees() error {
 	cmd := exec.Command("git", "worktree", "list")
 	cmd.Dir = wm.RepoPath
-	
+
 	var stderr strings.Builder
 	cmd.Stderr = &stderr
-	
+
 	output, err := cmd.Output()
 	if err != nil {
 		stderrStr := stderr.String()
@@ -510,7 +510,7 @@ func (wm *WorktreeManager) ListWorktrees() error {
 	if wm.Options.Verbose {
 		wm.printf("Executing: git worktree list\n")
 	}
-	
+
 	outputStr := strings.TrimSpace(string(output))
 	if outputStr == "" {
 		wm.printf("\n📋 No worktrees found\n")
@@ -524,21 +524,21 @@ func (wm *WorktreeManager) ListWorktrees() error {
 	wm.printf("\n📋 Existing worktrees:\n")
 	if !wm.Options.Quiet {
 		fmt.Printf("%s\n", outputStr)
-		
+
 		// Count worktrees for additional info
 		lines := strings.Split(outputStr, "\n")
 		worktreeCount := 0
 		mainRepo := ""
-		
+
 		for _, line := range lines {
 			if strings.TrimSpace(line) != "" {
 				worktreeCount++
-				if strings.Contains(line, "(bare)" ) || strings.Contains(line, "[" + wm.RepoName + "]") {
+				if strings.Contains(line, "(bare)") || strings.Contains(line, "["+wm.RepoName+"]") {
 					mainRepo = strings.Fields(line)[0]
 				}
 			}
 		}
-		
+
 		if wm.Options.Verbose {
 			fmt.Printf("\nSummary: Found %d worktree(s)\n", worktreeCount)
 			if mainRepo != "" {
@@ -552,27 +552,27 @@ func (wm *WorktreeManager) ListWorktrees() error {
 
 // HookExecutionResult represents the result of executing a single hook
 type HookExecutionResult struct {
-	Index         int
-	Command       string
-	Success       bool
-	Duration      time.Duration
-	ExitCode      int
-	Stdout        string
-	Stderr        string
-	Error         error
-	TimedOut      bool
+	Index    int
+	Command  string
+	Success  bool
+	Duration time.Duration
+	ExitCode int
+	Stdout   string
+	Stderr   string
+	Error    error
+	TimedOut bool
 }
 
 // HookSummary represents the overall execution summary
 type HookSummary struct {
-	HookType        string
-	TotalHooks      int
-	SuccessCount    int
-	FailedCount     int
-	SkippedCount    int
-	TotalDuration   time.Duration
-	Results         []HookExecutionResult
-	WorkingDir      string
+	HookType      string
+	TotalHooks    int
+	SuccessCount  int
+	FailedCount   int
+	SkippedCount  int
+	TotalDuration time.Duration
+	Results       []HookExecutionResult
+	WorkingDir    string
 }
 
 // ExecuteHooks executes a slice of command strings in sequence within the specified working directory
@@ -600,10 +600,10 @@ func (wm *WorktreeManager) ExecuteHooks(hooks []string, workDir string, hookType
 
 	// Initialize execution summary
 	summary := HookSummary{
-		HookType:    hookType,
-		TotalHooks:  len(hooks),
-		Results:     make([]HookExecutionResult, 0, len(hooks)),
-		WorkingDir:  workDir,
+		HookType:   hookType,
+		TotalHooks: len(hooks),
+		Results:    make([]HookExecutionResult, 0, len(hooks)),
+		WorkingDir: workDir,
 	}
 
 	// Show progress indicator for longer operations
@@ -625,7 +625,7 @@ func (wm *WorktreeManager) ExecuteHooks(hooks []string, workDir string, hookType
 
 		// Show current progress
 		wm.printf("\n   [%d/%d] 🔄 Running: %s\n", i+1, len(hooks), hookCommand)
-		
+
 		// In verbose mode, show exact command being executed
 		if wm.Options.Verbose {
 			wm.printf("      Directory: %s\n", workDir)
@@ -851,7 +851,7 @@ func (wm *WorktreeManager) executeHookCommand(command, workDir string, index int
 func (wm *WorktreeManager) displayHookResult(result HookExecutionResult) {
 	if result.Success {
 		wm.printf("      ✅ Success (duration: %v)\n", result.Duration)
-		
+
 		// Show stdout in verbose mode
 		if wm.Options.Verbose && result.Stdout != "" {
 			lines := strings.Split(result.Stdout, "\n")
@@ -867,7 +867,7 @@ func (wm *WorktreeManager) displayHookResult(result HookExecutionResult) {
 		if result.TimedOut {
 			errorIcon = "⏰"
 		}
-		
+
 		if result.TimedOut {
 			wm.printf("      %s Timed out after %v\n", errorIcon, result.Duration)
 		} else {

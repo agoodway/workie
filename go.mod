@@ -1,4 +1,4 @@
-module workie
+module github.com/agoodway/workie
 
 go 1.21
 
