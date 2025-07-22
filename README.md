@@ -276,10 +276,8 @@ No configuration file found
 
 #### ✅ Recommended Practices
 
-- **Environment templates**: Copy `.env.example` instead of `.env` to avoid secrets
 - **Development configs**: Include development-specific configurations only
 - **Script organization**: Group related scripts in directories for easy copying
-- **Documentation**: Include relevant documentation files (`README.md`, setup guides)
 - **Version control**: Always version control your `.workie.yaml` configuration
 
 #### ❌ What to Avoid
@@ -295,42 +293,6 @@ No configuration file found
 - **Directory grouping**: Organize related files in directories for cleaner config
 - **Environment separation**: Use different configs for different environments
 - **Documentation**: Comment your `.workie.yaml` to explain why files are copied
-
-### Real-World Examples
-
-#### Full-Stack Web Application
-```yaml
-files_to_copy:
-  # Environment setup
-  - .env.example
-  - .env.development.example
-
-  # Build and development tools
-  - package.json              # For npm dependencies reference
-  - docker-compose.dev.yml    # Development containers
-  - scripts/                  # Build and utility scripts
-
-  # Configuration files
-  - config/development.json   # App configuration
-  - .eslintrc.json           # Code quality
-  - jest.config.js           # Testing setup
-```
-
-#### Microservices Project
-```yaml
-files_to_copy:
-  # Shared configurations
-  - .env.example
-  - docker-compose.yml
-  - scripts/deploy.sh
-
-  # Service-specific configs
-  - config/
-  - kubernetes/              # K8s manifests
-  - docs/setup.md           # Development guide
-```
-
-By following these patterns and best practices, you'll ensure that every new worktree is properly configured and ready for development from the moment it's created.
 
 ## How It Works
 
@@ -357,6 +319,7 @@ Hooks allow you to execute commands at different stages in the lifecycle of a wo
 
 - **post_create**: Commands to run after creating a new worktree.
 - **pre_remove**: Commands to run before removing a worktree.
+- **post_cd**: Commands to run after changing to a worktree.
 
 ### Configuration Example
 
@@ -371,12 +334,16 @@ hooks:
   pre_remove:
     - "echo 'Cleaning up...'"
     - "rm -rf /tmp/*"
+  post_cd:
+    - "echo 'Entering worktree'"
+    - "ls -l"
 ```
 
 ### Common Use Cases
 
 - **Setting up development environments** with `post_create`, ensuring all dependencies are installed.
 - **Cleanup tasks** using `pre_remove` to tidy up temporary files.
+- **Post-cd actions** with `post_cd` to perform actions after changing to a worktree.
 
 ### Security Considerations
 
@@ -384,128 +351,12 @@ hooks:
 - Validate all inputs and paths to prevent injection attacks.
 - Limit the number of hooks and complexity to maintain performance.
 
-## Examples
-
-### Example 1: Basic Usage
-
-```bash
-cd /path/to/your/repo
-workie feature/user-authentication
-
-# Output:
-# 🌳 Workie
-# ==============================================
-# ✓ Detected git repository: /path/to/your/repo
-# ✓ Worktrees directory: /path/to/your-repo-worktrees
-# ✓ Created worktrees directory: /path/to/your-repo-worktrees
-# 📝 Creating worktree for branch 'feature/user-authentication'...
-# ✅ Successfully created worktree:
-#    Branch: feature/user-authentication
-#    Path: /path/to/your-repo-worktrees/feature/user-authentication
-#
-# 🚀 To start working:
-#    cd /path/to/your-repo-worktrees/feature/user-authentication
-```
-
-### Example 2: With Configuration File
-
-Create `.workie.yaml`:
-```yaml
-files_to_copy:
-  - .env.example
-  - scripts/setup.sh
-  - config/
-```
-
-Run the tool:
-```bash
-workie bugfix/database-connection
-
-# Output includes:
-# ✓ Loaded configuration from: .workie.yaml
-# ✓ Files to copy: 3 entries
-# 📂 Copying configured files to worktree...
-#    📄 Copying file: .env.example
-#    📄 Copying file: scripts/setup.sh
-#    📁 Copying directory: config/
-# ✓ Finished copying configured files
-```
-
-### Example 3: Auto-Generated Branch Names
-
-```bash
-workie
-
-# Creates branch like: feature/work-20240120-143022
-```
-
 ## Error Handling
 
 - **Not in Git Repository**: Shows clear error message
 - **Branch Already Exists**: Prevents duplicate branches
 - **Missing Configuration Files**: Shows warnings but continues
 - **File Copy Errors**: Shows warnings for individual files but continues
-
-## Building and Development
-
-### Prerequisites
-
-- Go 1.21 or later
-- Git
-
-### Building
-
-```bash
-go mod download
-go build -o workie .
-```
-
-### Testing
-
-```bash
-go test ./...
-```
-
-### Cross-Platform Builds
-
-```bash
-# Linux
-GOOS=linux GOARCH=amd64 go build -o workie-linux .
-
-# macOS
-GOOS=darwin GOARCH=amd64 go build -o workie-macos .
-
-# Windows
-GOOS=windows GOARCH=amd64 go build -o workie.exe .
-```
-
-## Roadmap
-
-Workie is evolving beyond Git worktree management into a comprehensive agentic coding assistant. Here's what's planned:
-
-### 🎯 Short Term (Q1-Q2 2024)
-- **Enhanced configuration** - More flexible `.workie.yaml` options for project setup
-- **Template system** - Pre-configured templates for common project types
-- **Integration plugins** - Support for popular development tools and workflows
-- **Smart branch suggestions** - AI-powered branch naming based on commit history and patterns
-
-### 🚀 Medium Term (Q3-Q4 2024)
-- **Code analysis engine** - Intelligent code quality assessment and suggestions
-- **Automated test generation** - Generate unit tests based on existing code patterns
-- **Workflow learning** - Learn and suggest optimizations for your development patterns
-- **Context-aware assistance** - Understand project structure and provide relevant recommendations
-
-### 🌟 Long Term (2025+)
-- **Full agentic capabilities** - Autonomous code generation and refactoring
-- **Natural language commands** - Describe what you want and let Workie implement it
-- **Team collaboration features** - Share and synchronize development patterns across teams
-- **Advanced AI integrations** - Integration with cutting-edge AI models for code generation
-- **Ecosystem expansion** - Plugin architecture for community-driven extensions
-
-### 🤝 Community Driven
-- **Open source contributions** - Community-driven feature development
-- **Plugin marketplace** - Ecosystem of community-created extensions
-- **Best practices sharing** - Learn from and contribute to collective development wisdom
 
 ## Dependencies
 

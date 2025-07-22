@@ -23,7 +23,7 @@ if [ -z "$1" ]; then
 fi
 
 USERNAME="$1"
-REPO_URL="https://github.com/$USERNAME/workie.git"
+REPO_URL="git@github.com:$USERNAME/workie.git"
 
 echo -e "${YELLOW}📋 Pre-flight checks...${NC}"
 
