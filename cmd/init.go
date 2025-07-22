@@ -179,59 +179,26 @@ files_to_copy:
 #     - "echo 'Cleaning up worktree...'"
 #     - "npm run cleanup"
 
-# Future Configuration Options (Coming Soon)
-# ==========================================
-# These features are planned for future releases.
-# You can add them to your config file now, but they won't be used yet.
 
-# Branch-specific configuration
-# branches:
-#   feature/*:
-#     files_to_copy:
-#       - .env.dev.example
-#       - config/development.yaml
-#   hotfix/*:
-#     files_to_copy:
-#       - .env.production.example
-#       - config/production.yaml
-
-# Environment-specific settings
-# environments:
-#   development:
-#     auto_install_deps: true
-#     run_tests: false
-#   staging:
-#     auto_install_deps: true
-#     run_tests: true
-#   production:
-#     auto_install_deps: false
-#     run_tests: true
-
-# Service management
-# services:
-#   database:
-#     type: "postgresql"
-#     version: "15"
-#     auto_start: true
-#   redis:
-#     type: "redis"
-#     version: "7"
-#     auto_start: false
-
-# AI-powered features
+# AI Configuration (Ollama-based Assistant)
+# =========================================
+# Configure AI features for intelligent code assistance
 # ai:
-#   enabled: false
-#   auto_suggest_files: true
-#   learn_patterns: true
-#   optimize_workflow: false
+#   enabled: true
+#   model:
+#     provider: "ollama"
+#     name: "llama3.2"
+#     temperature: 0.7
+#     max_tokens: 2048
+#   ollama:
+#     base_url: "http://localhost:11434"
+#     keep_alive: "5m"
+#   features:
+#     code_analysis: true
+#     code_generation: true
+#     commit_message_generation: true
+#     documentation_generation: true
 
-# Team collaboration
-# team:
-#   shared_config_url: ""
-#   auto_sync: false
-#   notifications:
-#     slack_webhook: ""
-#     teams_webhook: ""
 
 # Tips for Customizing Your Configuration:
 # ========================================
