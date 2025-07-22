@@ -36,3 +36,10 @@ build/
 # Temporary files
 *.tmp
 *.temp
+
+# Jekyll build files (for GitHub Pages)
+_site/
+.sass-cache/
+.jekyll-cache/
+.jekyll-metadata
+Gemfile.lock

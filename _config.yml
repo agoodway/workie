@@ -1,0 +1,103 @@
+# Site settings
+title: Workie
+description: >- # this means to ignore newlines until "baseurl:"
+  A flexible worker queue system for distributed task processing.
+  Built with Go, designed for high-performance and reliability.
+
+baseurl: "/workie" # the subpath of your site, e.g. /blog
+url: "https://username.github.io" # Update with your GitHub username
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+theme: minima
+
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+# Navigation
+header_pages:
+  - README.md
+  - USAGE.md
+  - docs/api/README.md
+  - CONTRIBUTING.md
+  - CODE_OF_CONDUCT.md
+
+# Collections for better organization
+collections:
+  docs:
+    output: true
+    permalink: /:collection/:name/
+
+# Default front matter
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "page"
+  - scope:
+      path: ""
+      type: "posts"
+    values:
+      layout: "post"
+  - scope:
+      path: ""
+      type: "docs"
+    values:
+      layout: "page"
+
+# Kramdown settings
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    block:
+      line_numbers: false
+
+# Exclude from processing
+exclude:
+  - .sass-cache/
+  - .jekyll-cache/
+  - gemfiles/
+  - Gemfile
+  - Gemfile.lock
+  - node_modules/
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/
+  - build/
+  - scripts/
+  - "*.go"
+  - go.mod
+  - go.sum
+  - Makefile
+  - github-setup.sh
+  - .github/
+  - .git/
+  - .gitignore
+
+# SEO and social
+author:
+  name: "Your Name"
+  email: "your.email@example.com"
+
+social:
+  github: username # Update with your GitHub username
+
+# GitHub repository
+repository: username/workie # Update with your GitHub username
+
+# Google Analytics (optional)
+# google_analytics: UA-XXXXXXXX-X
+
+# Minima theme customization
+minima:
+  skin: classic
+  social_links:
+    github: username # Update with your GitHub username
+
+show_excerpts: true
