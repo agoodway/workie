@@ -5,10 +5,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/fatih/color"
-	"github.com/spf13/cobra"
 	"github.com/agoodway/workie/config"
 	"github.com/agoodway/workie/manager"
+	"github.com/fatih/color"
+	"github.com/spf13/cobra"
 )
 
 var hooksCmd = &cobra.Command{
@@ -33,7 +33,7 @@ Hooks allow you to run custom commands when certain events occur, such as:
 }
 
 var (
-	hooksQuiet     bool
+	hooksQuiet      bool
 	hooksAIDecision bool
 	hooksInputFile  string
 )
@@ -48,7 +48,7 @@ var hooksListCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("failed to get current directory: %w", err)
 		}
-		
+
 		cfg, err := config.LoadConfig(repoRoot, "")
 		if err != nil {
 			return fmt.Errorf("failed to load config: %w", err)
@@ -128,13 +128,13 @@ var hooksRunCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		hookType := args[0]
-		
+
 		// Get the repository root
 		repoRoot, err := os.Getwd()
 		if err != nil {
 			return fmt.Errorf("failed to get current directory: %w", err)
 		}
-		
+
 		cfg, err := config.LoadConfig(repoRoot, "")
 		if err != nil {
 			return fmt.Errorf("failed to load config: %w", err)
@@ -144,6 +144,13 @@ var hooksRunCmd = &cobra.Command{
 		mgr.Config = cfg
 		mgr.RepoPath = repoRoot
 		mgr.Options.Quiet = hooksQuiet
+
+		// Special handling for claude_notification hooks
+		if hookType == "claude_notification" {
+			// For claude_notification, we need to execute the special handler
+			// that reads input from stdin and sends system notifications
+			return mgr.ExecuteClaudeNotificationHooks()
+		}
 
 		// Determine which hooks to run based on type
 		hooks, err := getHooksByType(cfg.Hooks, hookType)
@@ -161,7 +168,7 @@ var hooksRunCmd = &cobra.Command{
 		if !hooksQuiet {
 			fmt.Printf(color.CyanString("Running %s hooks...\n"), hookType)
 		}
-		
+
 		if err := mgr.ExecuteHooks(hooks, repoRoot, hookType); err != nil {
 			return fmt.Errorf("failed to execute hooks: %w", err)
 		}
@@ -183,7 +190,7 @@ var hooksTestCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("failed to get current directory: %w", err)
 		}
-		
+
 		cfg, err := config.LoadConfig(repoRoot, "")
 		if err != nil {
 			return fmt.Errorf("failed to load config: %w", err)
@@ -195,7 +202,7 @@ var hooksTestCmd = &cobra.Command{
 		}
 
 		allPassed := true
-		
+
 		// Test post_create hooks
 		if len(cfg.Hooks.PostCreate) > 0 {
 			if !hooksQuiet {
@@ -263,7 +270,7 @@ var hooksTestCmd = &cobra.Command{
 				}
 			}
 		}
-		
+
 		testHookType("claude_pre_tool_use", cfg.Hooks.ClaudePreToolUse)
 		testHookType("claude_post_tool_use", cfg.Hooks.ClaudePostToolUse)
 		testHookType("claude_notification", cfg.Hooks.ClaudeNotification)
@@ -280,7 +287,7 @@ var hooksTestCmd = &cobra.Command{
 				fmt.Println(color.RedString("✗ Some hooks failed validation"))
 			}
 		}
-		
+
 		if !allPassed {
 			return fmt.Errorf("hook validation failed")
 		}
@@ -297,14 +304,14 @@ var hooksAddCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		hookType := args[0]
 		command := args[1]
-		
+
 		// Validate hook type
 		validTypes := []string{
 			"post_create", "pre_remove",
 			"claude_pre_tool_use", "claude_post_tool_use", "claude_notification",
 			"claude_user_prompt_submit", "claude_stop", "claude_subagent_stop", "claude_pre_compact",
 		}
-		
+
 		isValid := false
 		for _, t := range validTypes {
 			if t == hookType {
@@ -312,31 +319,31 @@ var hooksAddCmd = &cobra.Command{
 				break
 			}
 		}
-		
+
 		if !isValid {
-			return fmt.Errorf("invalid hook type: %s. Valid types are: %s", 
+			return fmt.Errorf("invalid hook type: %s. Valid types are: %s",
 				hookType, strings.Join(validTypes, ", "))
 		}
 
 		// Get timeout flag
 		timeout, _ := cmd.Flags().GetDuration("timeout")
-		
+
 		// Create hook entry
 		hookEntry := fmt.Sprintf(`
 hooks:
   %s:
     - command: "%s"`, hookType, command)
-		
+
 		if timeout > 0 {
 			hookEntry += fmt.Sprintf(`
       timeout: %s`, timeout)
 		}
-		
+
 		if !hooksQuiet {
 			fmt.Println(color.CyanString("Add the following to your .workie.yaml file:"))
 			fmt.Println(hookEntry)
 			fmt.Println()
-			
+
 			// Check if .workie.yaml exists
 			if _, err := os.Stat(".workie.yaml"); err == nil {
 				fmt.Println(color.YellowString("Note: .workie.yaml already exists. Please add the hook manually to avoid overwriting existing configuration."))
@@ -347,7 +354,7 @@ hooks:
 			// In quiet mode, just output the YAML snippet
 			fmt.Println(hookEntry)
 		}
-		
+
 		return nil
 	},
 }
@@ -372,7 +379,7 @@ This command reads Claude Code input JSON and executes the hooks with optional A
 		if err != nil {
 			return fmt.Errorf("failed to get current directory: %w", err)
 		}
-		
+
 		cfg, err := config.LoadConfig(repoRoot, "")
 		if err != nil {
 			return fmt.Errorf("failed to load config: %w", err)
@@ -422,12 +429,12 @@ func testHook(command string) error {
 	if len(parts) == 0 {
 		return fmt.Errorf("empty command")
 	}
-	
+
 	// Basic validation - check if command seems reasonable
 	if len(command) > 1000 {
 		return fmt.Errorf("command too long")
 	}
-	
+
 	return nil
 }
 
@@ -484,24 +491,24 @@ func displayHookList(name string, hooks []string, timeoutMinutes int, quiet bool
 
 func init() {
 	rootCmd.AddCommand(hooksCmd)
-	
+
 	// Add subcommands
 	hooksCmd.AddCommand(hooksListCmd)
 	hooksCmd.AddCommand(hooksRunCmd)
 	hooksCmd.AddCommand(hooksTestCmd)
 	hooksCmd.AddCommand(hooksAddCmd)
 	hooksCmd.AddCommand(hooksClaudeTestCmd)
-	
+
 	// Add quiet flag to all subcommands
 	hooksListCmd.Flags().BoolVarP(&hooksQuiet, "quiet", "q", false, "Suppress output")
 	hooksRunCmd.Flags().BoolVarP(&hooksQuiet, "quiet", "q", false, "Suppress output (shows only hook output)")
 	hooksTestCmd.Flags().BoolVarP(&hooksQuiet, "quiet", "q", false, "Suppress output (exit code indicates success)")
 	hooksAddCmd.Flags().BoolVarP(&hooksQuiet, "quiet", "q", false, "Output only the YAML configuration")
 	hooksClaudeTestCmd.Flags().BoolVarP(&hooksQuiet, "quiet", "q", false, "Suppress output (shows only decision JSON)")
-	
+
 	// Add other flags
 	hooksAddCmd.Flags().DurationP("timeout", "t", 0, "Timeout for the hook execution")
-	
+
 	// Claude test specific flags
 	hooksClaudeTestCmd.Flags().BoolVarP(&hooksAIDecision, "ai", "a", false, "Enable AI decision making")
 	hooksClaudeTestCmd.Flags().StringVarP(&hooksInputFile, "input", "i", "", "Input file containing Claude Code JSON (defaults to stdin)")

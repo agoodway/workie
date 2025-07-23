@@ -503,6 +503,34 @@ hooks:
   claude_pre_compact:        # Before context compaction
 ```
 
+### System Notifications
+
+Workie can send system notifications when Claude Code events occur. This is particularly useful for the `claude_notification` hook to alert you when Claude needs your attention.
+
+```yaml
+hooks:
+  # Claude notification hooks
+  claude_notification:
+    - 'echo "Notification: $MESSAGE" >> ~/.workie/notifications.log'
+    - 'play-sound.sh'  # Your custom notification sound
+  
+  # Enable system notifications
+  system_notifications:
+    enabled: true
+    title: "Workie - Claude Code"  # Optional: custom title
+    icon: "assets/icon.png"         # Optional: custom icon path
+```
+
+When enabled, Workie will:
+1. Execute all configured `claude_notification` hooks
+2. Send a native system notification with the Claude message
+3. Support cross-platform notifications (macOS, Linux, Windows)
+
+The notification will appear as a system alert with:
+- **Title**: "Workie - Claude Code" (or your custom title)
+- **Message**: The actual notification from Claude (e.g., "Claude needs your permission to use Bash")
+- **Icon**: Platform default or your custom icon
+
 ### AI-Powered Tool Use Decisions 🤖
 
 Workie can use AI to analyze hook outputs and decide whether to approve or block tool usage:
@@ -651,6 +679,16 @@ To integrate Workie with Claude Code's native hook system, you need to modify yo
           {
             "type": "command",
             "command": "workie hooks run claude_stop"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "workie hooks run claude_notification"
           }
         ]
       }

@@ -1,0 +1,20 @@
+# Example configuration for testing system notifications
+# Copy this to .workie.yaml in your project root
+
+hooks:
+  # Claude notification hooks - these run when Claude sends notifications
+  claude_notification:
+    - 'echo "📢 Notification received: $MESSAGE"'
+    - 'echo "[$(date)] $MESSAGE" >> ~/.workie/notifications.log'
+  
+  # Enable system notifications
+  system_notifications:
+    enabled: true
+    title: "Workie Alert"
+    # icon: "/path/to/your/icon.png"  # Optional custom icon
+
+# To test this configuration:
+# 1. Copy this file to .workie.yaml in your project
+# 2. Run: workie hooks list
+# 3. Test with: cat examples/test-notification.json | workie hooks run claude_notification
+# 4. You should see a system notification popup!
