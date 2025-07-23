@@ -10,11 +10,30 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// AIDecisionConfig represents AI-powered hook decision configuration
+type AIDecisionConfig struct {
+	Enabled    bool   `yaml:"enabled" mapstructure:"enabled"`                       // Enable AI decision making
+	Model      string `yaml:"model,omitempty" mapstructure:"model"`                // Override model (uses default if empty)
+	StrictMode bool   `yaml:"strict_mode,omitempty" mapstructure:"strict_mode"`     // If true, any hook failure = block
+}
+
 // Hooks represents the configuration for lifecycle hooks
 type Hooks struct {
 	PostCreate     []string `yaml:"post_create" mapstructure:"post_create"`
 	PreRemove      []string `yaml:"pre_remove" mapstructure:"pre_remove"`
 	TimeoutMinutes int      `yaml:"timeout_minutes,omitempty" mapstructure:"timeout_minutes"` // Hook execution timeout in minutes (default: 5)
+	
+	// Claude Code hook events
+	ClaudePreToolUse       []string `yaml:"claude_pre_tool_use,omitempty" mapstructure:"claude_pre_tool_use"`             // Before Claude uses a tool
+	ClaudePostToolUse      []string `yaml:"claude_post_tool_use,omitempty" mapstructure:"claude_post_tool_use"`           // After Claude uses a tool
+	ClaudeNotification     []string `yaml:"claude_notification,omitempty" mapstructure:"claude_notification"`             // On Claude notifications
+	ClaudeUserPromptSubmit []string `yaml:"claude_user_prompt_submit,omitempty" mapstructure:"claude_user_prompt_submit"` // When user submits prompt
+	ClaudeStop             []string `yaml:"claude_stop,omitempty" mapstructure:"claude_stop"`                           // When Claude finishes responding
+	ClaudeSubagentStop     []string `yaml:"claude_subagent_stop,omitempty" mapstructure:"claude_subagent_stop"`         // When subagent finishes
+	ClaudePreCompact       []string `yaml:"claude_pre_compact,omitempty" mapstructure:"claude_pre_compact"`             // Before context compaction
+	
+	// AI decision configuration
+	AIDecision *AIDecisionConfig `yaml:"ai_decision,omitempty" mapstructure:"ai_decision"`
 }
 
 // AIModel represents AI model configuration

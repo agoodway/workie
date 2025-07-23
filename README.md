@@ -29,6 +29,14 @@ The future of Workie includes AI-powered code analysis, automated testing genera
 - **Worktree discovery** - List and manage existing worktrees
 - **Cross-platform support** - Works seamlessly on Linux, macOS, and Windows
 
+### 🪝 Hooks System
+
+- **Lifecycle hooks** - Run custom commands during worktree creation and removal
+- **Claude Code integration** - Hook into Claude Code events for automation
+- **Event-driven automation** - Execute scripts on tool use, prompts, and completions
+- **Flexible configuration** - Define hooks for 9 different event types
+- **Testing and validation** - Built-in commands to test and validate hook configurations
+
 ### 🤖 AI-Powered Features
 
 #### Current AI Capabilities
@@ -95,6 +103,23 @@ workie -l
 workie finish feature/completed-work
 workie finish feature/old-branch --prune-branch
 workie finish feature/experimental --force
+```
+
+### Hook Commands
+
+```bash
+# List all configured hooks
+workie hooks list
+
+# Run hooks manually (for testing)
+workie hooks run post_create
+workie hooks run claude_pre_tool_use
+
+# Test all hooks (dry run validation)
+workie hooks test
+
+# Generate hook configuration
+workie hooks add claude_stop "npm test" --timeout 2m
 ```
 
 ### AI-Powered Commands
@@ -385,24 +410,211 @@ Here's how you can set hooks in your configuration file:
 ```yaml
 hooks:
   timeout_minutes: 5  # Optional: Timeout in minutes for each hook command
+  
+  # Workie lifecycle hooks
   post_create:
     - "echo 'Welcome to your new environment!'"
     - "npm install"
   pre_remove:
     - "echo 'Cleaning up...'"
-    - "rm -rf /tmp/*"
+    - "git status"
+  
+  # Claude Code integration hooks
+  claude_pre_tool_use:
+    - 'echo "Tool being used: $TOOL_NAME"'
+  claude_post_tool_use:
+    - 'test "$TOOL_NAME" = "Edit" && npm run lint'
+  claude_user_prompt_submit:
+    - 'echo "Processing prompt..."'
+  claude_stop:
+    - "npm test"
+    - "echo 'Session complete'"
 ```
 
 ### Common Use Cases
 
-- **Setting up development environments** with `post_create`, ensuring all dependencies are installed.
-- **Cleanup tasks** using `pre_remove` to tidy up temporary files.
+- **Setting up development environments** with `post_create`, ensuring all dependencies are installed
+- **Cleanup tasks** using `pre_remove` to tidy up temporary files
+- **Automated testing** with `claude_stop` hook to run tests after Claude Code finishes
+- **Tool monitoring** with `claude_pre_tool_use` and `claude_post_tool_use` for logging and validation
+- **Session tracking** with `claude_user_prompt_submit` and `claude_stop` for analytics
+
+For detailed documentation on all available hooks and their usage, see [docs/hooks.md](docs/hooks.md).
 
 ### Security Considerations
 
 - Avoid destructive commands like `rm -rf /` in hooks.
 - Validate all inputs and paths to prevent injection attacks.
 - Limit the number of hooks and complexity to maintain performance.
+
+## Claude Code Hooks Integration ⚠️ 
+
+> ### 🚨 **EXPERIMENTAL FEATURE - USE AT YOUR OWN RISK** 🚨
+> 
+> **⚠️ CRITICAL WARNING ⚠️**
+> 
+> The Claude Code hooks integration is an **EXPERIMENTAL** and **UNOFFICIAL** feature that interfaces with Claude Code's hook system. 
+> 
+> **THIS INTEGRATION:**
+> - ❌ Is **NOT** officially supported or endorsed by Anthropic
+> - ❌ May **BREAK** without warning when Claude Code updates
+> - ❌ Executes **ARBITRARY SHELL COMMANDS** based on AI decisions
+> - ❌ Could **INTERFERE** with Claude Code's normal operation
+> - ❌ Has **NOT** been extensively tested in production environments
+> - ❌ May cause **DATA LOSS** or **SECURITY VULNERABILITIES** if misconfigured
+> 
+> **BY USING THIS FEATURE, YOU EXPLICITLY ACKNOWLEDGE AND ACCEPT THAT:**
+> - ✋ You understand **ALL RISKS** involved
+> - ✋ You take **FULL RESPONSIBILITY** for any consequences
+> - ✋ You will **NOT** hold Workie maintainers or contributors liable
+> - ✋ You will implement proper **SECURITY MEASURES** and **TESTING**
+> - ✋ You are using this in a **SAFE, ISOLATED ENVIRONMENT**
+> - ✋ You have **BACKUPS** of all important data
+> 
+> **⚡ PROCEED WITH EXTREME CAUTION ⚡**
+
+### Claude Code Hook Types
+
+Workie supports all Claude Code hook events:
+
+```yaml
+hooks:
+  # Before Claude uses any tool (Bash, Edit, Read, etc.)
+  claude_pre_tool_use:
+    - 'echo "[$(date)] Tool: $TOOL_NAME" >> ~/.workie/claude.log'
+    - 'security-check.sh "$TOOL_NAME"'
+  
+  # After Claude successfully uses a tool
+  claude_post_tool_use:
+    - 'test "$TOOL_NAME" = "Edit" && npm run lint || true'
+  
+  # When user submits a prompt
+  claude_user_prompt_submit:
+    - 'echo "New prompt received" | notify-send'
+  
+  # When Claude finishes responding
+  claude_stop:
+    - 'npm test --silent'
+    - 'git diff --stat'
+  
+  # Other supported hooks
+  claude_notification:        # On Claude notifications
+  claude_subagent_stop:      # When subagent finishes
+  claude_pre_compact:        # Before context compaction
+```
+
+### AI-Powered Tool Use Decisions 🤖
+
+Workie can use AI to analyze hook outputs and decide whether to approve or block tool usage:
+
+```yaml
+hooks:
+  claude_pre_tool_use:
+    # Security scripts that check tool usage
+    - 'check-file-paths.sh'
+    - 'validate-tool-params.sh'
+    - 'policy-enforcer.sh'
+  
+  # Enable AI decision making
+  ai_decision:
+    enabled: true
+    model: "llama3.2"      # Optional: override default
+    strict_mode: false     # If true, any hook failure = block
+```
+
+#### How AI Decisions Work
+
+1. **Hook Execution**: Your security scripts run and produce output
+2. **AI Analysis**: The LLM analyzes:
+   - Tool name and parameters
+   - Script outputs (stdout/stderr)
+   - Exit codes and warnings
+   - Security implications
+3. **Decision**: Returns JSON to Claude Code:
+   ```json
+   {
+     "decision": "block",
+     "reason": "Security policy violation detected"
+   }
+   ```
+
+### Testing Claude Code Hooks
+
+```bash
+# Create a test scenario
+cat > test-write.json << EOF
+{
+  "tool_name": "Write",
+  "tool_input": {
+    "file_path": "/etc/sensitive.conf",
+    "content": "test data"
+  }
+}
+EOF
+
+# Test your hooks with AI decision
+workie hooks claude-test --input test-write.json --ai
+
+# Test without AI (rule-based only)
+workie hooks claude-test --input test-write.json
+```
+
+### Example: Security Policy Enforcement
+
+```yaml
+hooks:
+  claude_pre_tool_use:
+    - |
+      #!/bin/bash
+      # Inline security check
+      case "$TOOL_NAME" in
+        Write|Edit)
+          if [[ "$1" =~ ^/etc/|^/sys/|^/root/ ]]; then
+            echo "BLOCKED: System file modification attempt" >&2
+            exit 1
+          fi
+          ;;
+        Bash)
+          echo "WARNING: Shell execution requested" >&2
+          ;;
+      esac
+    - 'audit-log.sh "$TOOL_NAME" "$@"'
+```
+
+### Example: Development Workflow Automation
+
+```yaml
+hooks:
+  # Auto-format on edit
+  claude_post_tool_use:
+    - 'test "$TOOL_NAME" = "Edit" && prettier --write . || true'
+  
+  # Run tests after Claude finishes
+  claude_stop:
+    - 'npm test'
+    - 'echo "✅ Session complete. Test results above."'
+  
+  # Track Claude's activity
+  claude_pre_tool_use:
+    - 'echo "[$(date)] $TOOL_NAME" >> ~/.claude-activity.log'
+```
+
+### Best Practices for Claude Code Hooks
+
+1. **Test Thoroughly**: Always test hooks in a safe environment first
+2. **Fail Gracefully**: Use `|| true` to prevent blocking on non-critical failures
+3. **Log Everything**: Keep audit logs of tool usage and decisions
+4. **Performance**: Keep hooks fast to avoid slowing down Claude Code
+5. **Security First**: Implement defense in depth with multiple validation layers
+
+### Troubleshooting
+
+- **Hooks not triggering**: Ensure Claude Code is configured to use your hooks
+- **AI decisions failing**: Check that Ollama is running and the model is available
+- **Performance issues**: Reduce hook complexity or increase timeout settings
+- **False positives**: Tune your security scripts and AI prompts
+
+Remember: This integration is experimental. Always have backups and test in isolated environments!
 
 ## AI Configuration
 
