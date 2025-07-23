@@ -29,7 +29,16 @@ The future of Workie includes AI-powered code analysis, automated testing genera
 - **Worktree discovery** - List and manage existing worktrees
 - **Cross-platform support** - Works seamlessly on Linux, macOS, and Windows
 
-### 🤖 AI-Powered Features (Maybe Roadmap)
+### 🤖 AI-Powered Features
+
+#### Current AI Capabilities
+
+- **AI-Powered Assistant** - Ask questions about your codebase and get intelligent responses
+- **Smart Branch Names** - Generate descriptive branch names from issue details using AI
+- **Tool Integration** - AI can execute git commands, analyze files, and suggest improvements
+- **Commit Message Generation** - Create meaningful commit messages based on your changes
+
+#### Roadmap
 
 - **Code analysis and suggestions** - Intelligent code review and improvement recommendations
 - **Automated testing generation** - Generate unit tests based on your code patterns
@@ -86,6 +95,27 @@ workie -l
 workie finish feature/completed-work
 workie finish feature/old-branch --prune-branch
 workie finish feature/experimental --force
+```
+
+### AI-Powered Commands
+
+```bash
+# Ask AI about your codebase
+workie ask "What does the main function do?"
+workie ask "How do I add a new provider?"
+
+# Use AI with tools (function calling)
+workie ask -t "Create a commit message for my changes"
+workie ask -t "What are the recent commits?"
+workie ask -t "List all test files"
+
+# Create branches from issues with AI-generated names
+workie begin --issue 123 --ai
+workie begin --issue github:456 --ai
+workie begin --issue jira:PROJ-789 --ai
+
+# When only one provider is configured, omit the provider prefix
+workie begin --issue 123  # Uses the only configured provider
 ```
 
 ### Help and Information
@@ -373,6 +403,59 @@ hooks:
 - Avoid destructive commands like `rm -rf /` in hooks.
 - Validate all inputs and paths to prevent injection attacks.
 - Limit the number of hooks and complexity to maintain performance.
+
+## AI Configuration
+
+Workie integrates with Ollama for local AI capabilities. Configure AI features in your `.workie.yaml`:
+
+```yaml
+ai:
+  enabled: true
+  model:
+    provider: "ollama"
+    name: "llama3.2"         # or any Ollama model you have installed
+    temperature: 0.7
+    max_tokens: 2048
+  ollama:
+    base_url: "http://localhost:11434"  # Default Ollama URL
+    keep_alive: "5m"
+```
+
+### Setting Up AI Features
+
+1. **Install Ollama**: Download from https://ollama.com
+2. **Pull a model**: Run `ollama pull llama3.2` or your preferred model
+3. **Enable in config**: Set `ai.enabled: true` in your `.workie.yaml`
+
+### AI Use Cases
+
+#### Smart Branch Names from Issues
+When creating branches from issues, AI analyzes the issue context to generate descriptive names:
+
+```bash
+# Standard branch name: fix/123-update-user-authentication-to-support-oauth2
+workie begin --issue 123
+
+# AI-generated name: fix/123-oauth2-auth
+workie begin --issue 123 --ai
+```
+
+#### Intelligent Code Assistant
+Ask questions about your codebase and get context-aware answers:
+
+```bash
+# Understanding code
+workie ask "What does the WorktreeManager do?"
+
+# Finding files
+workie ask -t "Find all test files related to authentication"
+
+# Generating code
+workie ask -t "Create a unit test for the parseIssueReference function"
+
+# Git operations
+workie ask -t "Show me the last 5 commits with their messages"
+```
 
 ## Issue Provider Configuration
 
