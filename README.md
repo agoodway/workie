@@ -410,7 +410,7 @@ Here's how you can set hooks in your configuration file:
 ```yaml
 hooks:
   timeout_minutes: 5  # Optional: Timeout in minutes for each hook command
-  
+
   # Workie lifecycle hooks
   post_create:
     - "echo 'Welcome to your new environment!'"
@@ -418,7 +418,7 @@ hooks:
   pre_remove:
     - "echo 'Cleaning up...'"
     - "git status"
-  
+
   # Claude Code integration hooks
   claude_pre_tool_use:
     - 'echo "Tool being used: $TOOL_NAME"'
@@ -447,14 +447,14 @@ For detailed documentation on all available hooks and their usage, see [docs/hoo
 - Validate all inputs and paths to prevent injection attacks.
 - Limit the number of hooks and complexity to maintain performance.
 
-## Claude Code Hooks Integration ⚠️ 
+## Claude Code Hooks Integration ⚠️
 
 > ### 🚨 **EXPERIMENTAL FEATURE - USE AT YOUR OWN RISK** 🚨
-> 
+>
 > **⚠️ CRITICAL WARNING ⚠️**
-> 
-> The Claude Code hooks integration is an **EXPERIMENTAL** and **UNOFFICIAL** feature that interfaces with Claude Code's hook system. 
-> 
+>
+> The Claude Code hooks integration is an **EXPERIMENTAL** and **UNOFFICIAL** feature that interfaces with Claude Code's hook system.
+>
 > **THIS INTEGRATION:**
 > - ❌ Is **NOT** officially supported or endorsed by Anthropic
 > - ❌ May **BREAK** without warning when Claude Code updates
@@ -462,7 +462,7 @@ For detailed documentation on all available hooks and their usage, see [docs/hoo
 > - ❌ Could **INTERFERE** with Claude Code's normal operation
 > - ❌ Has **NOT** been extensively tested in production environments
 > - ❌ May cause **DATA LOSS** or **SECURITY VULNERABILITIES** if misconfigured
-> 
+>
 > **BY USING THIS FEATURE, YOU EXPLICITLY ACKNOWLEDGE AND ACCEPT THAT:**
 > - ✋ You understand **ALL RISKS** involved
 > - ✋ You take **FULL RESPONSIBILITY** for any consequences
@@ -470,7 +470,7 @@ For detailed documentation on all available hooks and their usage, see [docs/hoo
 > - ✋ You will implement proper **SECURITY MEASURES** and **TESTING**
 > - ✋ You are using this in a **SAFE, ISOLATED ENVIRONMENT**
 > - ✋ You have **BACKUPS** of all important data
-> 
+>
 > **⚡ PROCEED WITH EXTREME CAUTION ⚡**
 
 ### Claude Code Hook Types
@@ -483,20 +483,20 @@ hooks:
   claude_pre_tool_use:
     - 'echo "[$(date)] Tool: $TOOL_NAME" >> ~/.workie/claude.log'
     - 'security-check.sh "$TOOL_NAME"'
-  
+
   # After Claude successfully uses a tool
   claude_post_tool_use:
     - 'test "$TOOL_NAME" = "Edit" && npm run lint || true'
-  
+
   # When user submits a prompt
   claude_user_prompt_submit:
     - 'echo "New prompt received" | notify-send'
-  
+
   # When Claude finishes responding
   claude_stop:
     - 'npm test --silent'
     - 'git diff --stat'
-  
+
   # Other supported hooks
   claude_notification:        # On Claude notifications
   claude_subagent_stop:      # When subagent finishes
@@ -514,7 +514,7 @@ hooks:
     - 'check-file-paths.sh'
     - 'validate-tool-params.sh'
     - 'policy-enforcer.sh'
-  
+
   # Enable AI decision making
   ai_decision:
     enabled: true
@@ -588,16 +588,116 @@ hooks:
   # Auto-format on edit
   claude_post_tool_use:
     - 'test "$TOOL_NAME" = "Edit" && prettier --write . || true'
-  
+
   # Run tests after Claude finishes
   claude_stop:
     - 'npm test'
     - 'echo "✅ Session complete. Test results above."'
-  
+
   # Track Claude's activity
   claude_pre_tool_use:
     - 'echo "[$(date)] $TOOL_NAME" >> ~/.claude-activity.log'
 ```
+
+### Configuring Claude Code to Use Workie Hooks
+
+To integrate Workie with Claude Code's native hook system, you need to modify your Claude settings file. Here's how:
+
+1. **Locate your Claude settings file**:
+   - User settings: `~/.claude/settings.json`
+   - Project settings: `.claude/settings.json` (in your project root)
+   - Local settings: `.claude/settings.local.json` (not committed to git)
+
+2. **Add Workie hook commands to your Claude settings**:
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "workie hooks run claude_pre_tool_use"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "workie hooks run claude_post_tool_use"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "workie hooks run claude_user_prompt_submit"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "workie hooks run claude_stop"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+3. **Configure your Workie hooks** in `.workie.yaml`:
+
+```yaml
+hooks:
+  claude_pre_tool_use:
+    - 'echo "Tool: $TOOL_NAME" >> ~/.workie/claude-activity.log'
+    - 'security-check.sh "$TOOL_NAME"'
+
+  claude_post_tool_use:
+    - 'test "$TOOL_NAME" = "Edit" && npm run lint || true'
+
+  claude_stop:
+    - 'npm test'
+    - 'git status --short'
+
+  # Enable AI decision making for security
+  ai_decision:
+    enabled: true
+    model: "zephyr"
+```
+
+4. **Test the integration**:
+
+```bash
+# Test that Claude Code can call Workie hooks
+workie hooks test
+
+# Manually test a specific hook type
+workie hooks run claude_pre_tool_use
+
+# Test with Claude Code input simulation
+echo '{"tool_name":"Write","tool_input":{"file_path":"/tmp/test.txt"}}' | workie hooks claude-test --ai
+```
+
+This setup allows you to:
+- Use Workie's configuration management for your Claude Code hooks
+- Leverage Workie's AI decision-making capabilities for tool approval/blocking
+- Maintain hook configurations in version control with your project
+- Test hooks independently before using them with Claude Code
 
 ### Best Practices for Claude Code Hooks
 
