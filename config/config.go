@@ -40,8 +40,9 @@ type OllamaConfig struct {
 
 // AIConfig represents AI configuration
 type AIConfig struct {
-	Model  AIModel       `yaml:"model" mapstructure:"model"`
-	Ollama OllamaConfig  `yaml:"ollama" mapstructure:"ollama"`
+	Enabled bool          `yaml:"enabled" mapstructure:"enabled"`
+	Model   AIModel       `yaml:"model" mapstructure:"model"`
+	Ollama  OllamaConfig  `yaml:"ollama" mapstructure:"ollama"`
 }
 
 // Config represents the YAML configuration structure
