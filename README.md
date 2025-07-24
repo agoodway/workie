@@ -5,690 +5,386 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/agoodway/workie)](https://goreportcard.com/report/github.com/agoodway/workie)
 [![GitHub release](https://img.shields.io/github/release/agoodway/workie.svg)](https://github.com/agoodway/workie/releases/latest)
 
-A comprehensive developer assistant that streamlines your coding workflow. Starting with advanced Git worktree management, Workie is evolving into an intelligent coding companion powered by AI agents to automate common development tasks and boost your productivity.
+A comprehensive developer assistant that streamlines your coding workflow with advanced Git worktree management, AI-powered features, and Claude Code integration.
 
-## Vision
+## Table of Contents
 
-Workie is transforming from a simple Git worktree manager into a comprehensive agentic coding assistant that understands your development workflow. Our vision is to create an intelligent CLI companion that:
+- [Quick Start](#quick-start)
+- [Features](#features)
+- [Installation](#installation)
+- [Basic Usage](#basic-usage)
+- [Configuration](#configuration)
+- [Hooks System](#hooks-system)
+- [AI Features](#ai-features)
+- [Issue Provider Integration](#issue-provider-integration)
+- [Advanced Usage](#advanced-usage)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
 
-- **Learns your patterns** - Understands how you work and adapts to your coding style
-- **Automates repetitive tasks** - From branch creation to code generation and testing
-- **Provides intelligent suggestions** - Recommends optimal workflows based on your project context
-- **Integrates seamlessly** - Works with your existing tools and development environment
-- **Evolves with AI** - Leverages the latest AI technologies to enhance developer productivity
+## Quick Start
 
-The future of Workie includes AI-powered code analysis, automated testing generation, intelligent refactoring suggestions, and context-aware development assistance.
+```bash
+# Install
+go install github.com/agoodway/workie@latest
+
+# Initialize configuration
+workie init
+
+# Create a new worktree branch
+workie begin feature/new-ui
+
+# List worktrees
+workie --list
+
+# Ask AI about your code
+workie ask "What does this function do?"
+```
 
 ## Features
 
-### 🌳 Git Worktree Management (Current)
+### Core Features
 
-- **Smart worktree creation** - Create git worktrees with new branches effortlessly
-- **Intelligent branch naming** - Auto-generate branch names based on timestamp or patterns
-- **Configuration-driven setup** - YAML configuration support for copying files/directories to new worktrees
-- **Worktree discovery** - List and manage existing worktrees
-- **Cross-platform support** - Works seamlessly on Linux, macOS, and Windows
+- 🌳 **Smart Git Worktree Management** - Create and manage git worktrees effortlessly
+- 🤖 **AI-Powered Assistant** - Ask questions and get intelligent responses about your codebase
+- 🪝 **Comprehensive Hooks System** - Automate workflows with lifecycle and Claude Code hooks
+- 📋 **Issue Provider Integration** - Connect with GitHub, Jira, and Linear
+- 🔔 **System Notifications** - Get alerts for important events
+- 📁 **Smart File Copying** - Automatically copy essential files to new worktrees
 
-### 🪝 Hooks System
+### AI Capabilities
 
-- **Lifecycle hooks** - Run custom commands during worktree creation and removal
-- **Claude Code integration** - Hook into Claude Code events for automation
-- **Event-driven automation** - Execute scripts on tool use, prompts, and completions
-- **Flexible configuration** - Define hooks for 9 different event types
-- **Testing and validation** - Built-in commands to test and validate hook configurations
-
-### 🤖 AI-Powered Features
-
-#### Current AI Capabilities
-
-- **AI-Powered Assistant** - Ask questions about your codebase and get intelligent responses
-- **Smart Branch Names** - Generate descriptive branch names from issue details using AI
-- **Tool Integration** - AI can execute git commands, analyze files, and suggest improvements
-- **Commit Message Generation** - Create meaningful commit messages based on your changes
-
-#### Roadmap
-
-- **Code analysis and suggestions** - Intelligent code review and improvement recommendations
-- **Automated testing generation** - Generate unit tests based on your code patterns
-- **Context-aware assistance** - Understand your project structure and provide relevant help
-- **Workflow automation** - Learn and automate your common development patterns
+- Generate descriptive branch names from issue details
+- Create meaningful commit messages
+- Execute git commands with context awareness
+- AI-powered security decisions for tool usage
 
 ## Installation
 
-### From Source
-
-```bash
-# Clone or navigate to the project directory
-cd workie
-
-# Build the binary
-go build -o workie .
-
-# Optionally, install to your PATH
-go install .
-```
-
-### Direct Installation
+### Using Go Install (Recommended)
 
 ```bash
 go install github.com/agoodway/workie@latest
 ```
 
-## Usage
-
-### Basic Commands
+### Building from Source
 
 ```bash
-# Show help and available commands
-workie
+# Clone the repository
+git clone https://github.com/agoodway/workie.git
+cd workie
 
-# Show version information
-workie --version
+# Build the binary
+go build -o workie .
 
-# Initialize configuration file in your project
+# Optional: Install to PATH
+go install .
+```
+
+### Requirements
+
+- Go 1.21 or higher
+- Git installed and configured
+- Optional: [Ollama](https://ollama.com) for AI features
+
+## Basic Usage
+
+### Worktree Management
+
+```bash
+# Initialize configuration in your project
 workie init
 
-# Begin work on a new branch with worktree
+# Create a new worktree with a branch
 workie begin feature/new-ui
 workie begin bugfix/issue-123
 
-# Begin work and change directory to it (using quiet mode)
-cd $(workie begin -q feature/new-feature)
+# Create and change to new worktree
+workie begin -q feature/new-feature | cd
 
-# List existing worktrees
+# List all worktrees
 workie --list
 workie -l
 
-# Finish working on a branch (remove worktree)
+# Remove a worktree
 workie finish feature/completed-work
 workie finish feature/old-branch --prune-branch
-workie finish feature/experimental --force
 ```
 
-### Hook Commands
+### AI Assistant
 
 ```bash
-# List all configured hooks
-workie hooks list
-
-# Run hooks manually (for testing)
-workie hooks run post_create
-workie hooks run claude_pre_tool_use
-
-# Test all hooks (dry run validation)
-workie hooks test
-
-# Generate hook configuration
-workie hooks add claude_stop "npm test" --timeout 2m
-```
-
-### AI-Powered Commands
-
-```bash
-# Ask AI about your codebase
+# Ask questions about your codebase
 workie ask "What does the main function do?"
 workie ask "How do I add a new provider?"
 
-# Use AI with tools (function calling)
+# Use AI with tools
 workie ask -t "Create a commit message for my changes"
-workie ask -t "What are the recent commits?"
 workie ask -t "List all test files"
 
-# Create branches from issues with AI-generated names
+# Create AI-powered branch names from issues
 workie begin --issue 123 --ai
 workie begin --issue github:456 --ai
-workie begin --issue jira:PROJ-789 --ai
-
-# When only one provider is configured, omit the provider prefix
-workie begin --issue 123  # Uses the only configured provider
 ```
 
-### Help and Information
+### Hooks Management
 
 ```bash
-# Show help and available commands
-workie --help
+# List configured hooks
+workie hooks list
 
-# Display version, commit, and build information
-workie --version
-```
+# Test all hooks
+workie hooks test
 
-### Issue Provider Integration
-
-Workie can integrate with GitHub, Jira, and Linear to streamline your issue-based workflow:
-
-```bash
-# List issues from configured providers
-workie issues
-
-# List issues from a specific provider
-workie issues --provider github
-
-# View issue details
-workie issues github:123
-workie issues jira:PROJ-456
-workie issues linear:TEAM-789
-
-# Create a worktree from an issue
-workie issues github:123 --create
-workie issues jira:PROJ-456 -c
-
-# Filter issues
-workie issues --assignee me --status open
-workie issues --labels bug,urgent --limit 10
+# Run specific hooks
+workie hooks run post_create
+workie hooks run claude_notification
 ```
 
 ## Configuration
 
-The tool supports YAML configuration files that specify files and directories to automatically copy to new worktrees. This is useful for environment files, configuration files, and setup scripts that should be available in each worktree.
+Workie uses YAML configuration files to customize behavior. Place `.workie.yaml` in your repository root.
 
-### Quick Start with Init Command
+### Basic Configuration
 
-The easiest way to get started is to use the `init` command to generate a configuration file:
+```yaml
+# Files to copy to new worktrees
+files_to_copy:
+  - .env.example
+  - scripts/
+  - config/development.yaml
+
+# Default issue provider
+default_provider: github
+
+# Basic hooks
+hooks:
+  post_create:
+    - "npm install"
+    - "cp .env.example .env"
+  pre_remove:
+    - "git status"
+```
+
+### Initializing Configuration
+
+The easiest way to get started:
 
 ```bash
-# Create .workie.yaml with comprehensive examples
+# Create .workie.yaml with examples
 workie init
 
-# Create with custom name
+# Create with custom filename
 workie init --output my-config.yaml
 
 # Overwrite existing file
 workie init --force
 ```
 
-This creates a well-documented configuration file with:
-- **Commented examples** for all common file types
-- **Language-specific sections** (Node.js, Python, Go, Ruby, etc.)
-- **Best practices** and usage tips
-- **Future feature previews** with placeholder configurations
+## Hooks System
 
-### Configuration File Location
+Hooks allow you to automate tasks at different stages of your workflow.
 
-Place one of these files in your repository root:
-- `.workie.yaml` (preferred, hidden file)
-- `workie.yaml` (alternative)
-
-### Configuration Format
-
-```yaml
-files_to_copy:
-  - .env.example
-  - .env.dev.example
-  - config/development.yaml
-  - scripts/
-  - docs/setup.md
-  - docker-compose.dev.yml
-```
-
-### Configuration Features
-
-- **Files**: Specify individual files to copy
-- **Directories**: Specify directories to copy recursively (end with `/` for clarity)
-- **Relative paths**: All paths are relative to the repository root
-- **Automatic creation**: Destination directories are created automatically
-- **Error handling**: Missing files/directories show warnings but don't stop the process
-
-## 🚀 File Copying
-
-The file copying feature is one of Workie's most powerful capabilities, automatically copying essential files and directories whenever a new worktree is created. This ensures consistent setup across all your branches.
-
-### How File Copying Works
-
-1. **Configuration**: Define files and directories in `.workie.yaml`
-2. **Automatic Detection**: When creating a worktree, Workie reads the configuration
-3. **Smart Copying**: Files are copied with proper directory structure
-4. **Error Handling**: Missing files generate warnings but don't stop the process
-
-### Visual Directory Structure
-
-**Before** (main repository):
-```
-your-project/
-├── .workie.yaml
-├── .env.example
-├── scripts/
-│   └── setup.sh
-└── config/
-    └── development.yaml
-```
-
-**After** creating a new worktree:
-```
-your-project-worktrees/
-└── feature-new-ui/
-    ├── .env.example         # ✓ Copied
-    ├── scripts/             # ✓ Copied recursively
-    │   └── setup.sh
-    └── config/              # ✓ Copied recursively
-        └── development.yaml
-```
-
-### Detailed Configuration Examples
-
-#### Example 1: Development Environment Setup
-```yaml
-files_to_copy:
-  - .env.example              # Environment variables template
-  - .env.dev.example          # Development-specific environment
-  - scripts/                  # All utility scripts
-  - config/development.yaml   # Development configuration
-  - docker-compose.dev.yml    # Development Docker setup
-```
-
-#### Example 2: Language-Specific Configurations
-```yaml
-# Node.js project
-files_to_copy:
-  - .nvmrc                    # Node version specification
-  - .env.example
-  - scripts/
-  - jest.config.js            # Testing configuration
-  - .eslintrc.json           # Linting rules
-```
-
-```yaml
-# Python project
-files_to_copy:
-  - .python-version           # Python version specification
-  - .env.example
-  - requirements-dev.txt      # Development dependencies
-  - pytest.ini               # Test configuration
-  - setup.cfg                 # Tool configurations
-```
-
-### Advanced File Copying Features
-
-#### Directory Handling
-- Directories are copied **recursively** with full structure
-- Empty directories are created if needed
-- Nested subdirectories maintain their hierarchy
-
-#### Error Resilience
-- **Missing source files**: Shows warning, continues processing
-- **Permission issues**: Shows detailed error, continues with other files
-- **Path conflicts**: Overwrites existing files in destination
-
-#### Path Resolution
-- All paths are **relative to repository root**
-- Supports both files and directories
-- Automatically creates destination directory structure
-
-### Troubleshooting File Copying
-
-#### Common Issues and Solutions
-
-**❌ File not found warning**
-```
-Warning: Failed to copy file 'missing-file.txt': file does not exist
-```
-**Solution**: Verify the file path is correct and relative to repository root
-
-**❌ Permission denied**
-```
-Error: Failed to copy file '.env.example': permission denied
-```
-**Solution**: Check file permissions and ensure write access to destination
-
-**❌ Configuration not loaded**
-```
-No configuration file found
-```
-**Solution**: Ensure `.workie.yaml` exists in repository root and is valid YAML
-
-#### Debugging Tips
-
-1. **Use verbose mode** to see detailed copying logs:
-   ```bash
-   workie begin feature/new-branch --verbose
-   ```
-
-2. **Validate your YAML configuration**:
-   ```bash
-   # Test YAML syntax
-   python -c "import yaml; yaml.safe_load(open('.workie.yaml'))"
-   ```
-
-3. **Check file paths** from repository root:
-   ```bash
-   # Verify files exist
-   ls -la .env.example config/
-   ```
-
-### Best Practices for File Copying
-
-#### ✅ Recommended Practices
-
-- **Development configs**: Include development-specific configurations only
-- **Script organization**: Group related scripts in directories for easy copying
-- **Version control**: Always version control your `.workie.yaml` configuration
-
-#### ❌ What to Avoid
-
-- **Large binary files**: Avoid copying large assets or compiled binaries
-- **Sensitive data**: Never copy files containing secrets or credentials
-- **Generated files**: Don't copy build artifacts or generated content
-- **OS-specific files**: Avoid copying system-specific configurations
-
-#### 🎯 Optimization Tips
-
-- **Minimal file set**: Only copy files essential for initial development
-- **Directory grouping**: Organize related files in directories for cleaner config
-- **Environment separation**: Use different configs for different environments
-- **Documentation**: Comment your `.workie.yaml` to explain why files are copied
-
-## How It Works
-
-1. **Repository Detection**: Detects the current git repository using `git rev-parse --show-toplevel`
-2. **Configuration Loading**: Loads YAML configuration if present
-3. **Directory Setup**: Creates a `<repo-name>-worktrees` directory alongside your repository
-4. **Branch Creation**: Creates a new git worktree with a new branch
-5. **File Copying**: Copies configured files/directories to the new worktree
-6. **Summary**: Shows the new worktree location and lists all worktrees
-
-## Directory Structure
-
-```
-your-project/                    # Your main repository
-your-project-worktrees/          # Worktrees directory (created automatically)
-├── feature-new-ui/              # Worktree for feature/new-ui branch
-├── bugfix-issue-123/            # Worktree for bugfix/issue-123 branch
-└── feature-work-20240120-143022/ # Auto-generated branch name
-```
-
-## Hooks
-
-Hooks allow you to execute commands at different stages in the lifecycle of a worktree:
-
-- **post_create**: Commands to run after creating a new worktree.
-- **pre_remove**: Commands to run before removing a worktree.
-
-### Configuration Example
-
-Here's how you can set hooks in your configuration file:
+### Lifecycle Hooks
 
 ```yaml
 hooks:
-  timeout_minutes: 5  # Optional: Timeout in minutes for each hook command
-
-  # Workie lifecycle hooks
+  # After creating a worktree
   post_create:
-    - "echo 'Welcome to your new environment!'"
+    - "echo 'Welcome to your new worktree!'"
     - "npm install"
+    
+  # Before removing a worktree  
   pre_remove:
     - "echo 'Cleaning up...'"
     - "git status"
+```
 
-  # Claude Code integration hooks
+### Claude Code Integration
+
+> ⚠️ **EXPERIMENTAL FEATURE** - Claude Code hooks are unofficial and may break without warning.
+
+```yaml
+hooks:
+  # Before Claude uses a tool
   claude_pre_tool_use:
-    - 'echo "Tool being used: $TOOL_NAME"'
+    - 'echo "Tool: $TOOL_NAME" >> activity.log'
+    
+  # After Claude uses a tool
   claude_post_tool_use:
     - 'test "$TOOL_NAME" = "Edit" && npm run lint'
-  claude_user_prompt_submit:
-    - 'echo "Processing prompt..."'
-  claude_stop:
-    - "npm test"
-    - "echo 'Session complete'"
-```
-
-### Common Use Cases
-
-- **Setting up development environments** with `post_create`, ensuring all dependencies are installed
-- **Cleanup tasks** using `pre_remove` to tidy up temporary files
-- **Automated testing** with `claude_stop` hook to run tests after Claude Code finishes
-- **Tool monitoring** with `claude_pre_tool_use` and `claude_post_tool_use` for logging and validation
-- **Session tracking** with `claude_user_prompt_submit` and `claude_stop` for analytics
-
-For detailed documentation on all available hooks and their usage, see [docs/hooks.md](docs/hooks.md).
-
-### Security Considerations
-
-- Avoid destructive commands like `rm -rf /` in hooks.
-- Validate all inputs and paths to prevent injection attacks.
-- Limit the number of hooks and complexity to maintain performance.
-
-## Claude Code Hooks Integration ⚠️
-
-> ### 🚨 **EXPERIMENTAL FEATURE - USE AT YOUR OWN RISK** 🚨
->
-> **⚠️ CRITICAL WARNING ⚠️**
->
-> The Claude Code hooks integration is an **EXPERIMENTAL** and **UNOFFICIAL** feature that interfaces with Claude Code's hook system.
->
-> **THIS INTEGRATION:**
-> - ❌ Is **NOT** officially supported or endorsed by Anthropic
-> - ❌ May **BREAK** without warning when Claude Code updates
-> - ❌ Executes **ARBITRARY SHELL COMMANDS** based on AI decisions
-> - ❌ Could **INTERFERE** with Claude Code's normal operation
-> - ❌ Has **NOT** been extensively tested in production environments
-> - ❌ May cause **DATA LOSS** or **SECURITY VULNERABILITIES** if misconfigured
->
-> **BY USING THIS FEATURE, YOU EXPLICITLY ACKNOWLEDGE AND ACCEPT THAT:**
-> - ✋ You understand **ALL RISKS** involved
-> - ✋ You take **FULL RESPONSIBILITY** for any consequences
-> - ✋ You will **NOT** hold Workie maintainers or contributors liable
-> - ✋ You will implement proper **SECURITY MEASURES** and **TESTING**
-> - ✋ You are using this in a **SAFE, ISOLATED ENVIRONMENT**
-> - ✋ You have **BACKUPS** of all important data
->
-> **⚡ PROCEED WITH EXTREME CAUTION ⚡**
-
-### Claude Code Hook Types
-
-Workie supports all Claude Code hook events:
-
-```yaml
-hooks:
-  # Before Claude uses any tool (Bash, Edit, Read, etc.)
-  claude_pre_tool_use:
-    - 'echo "[$(date)] Tool: $TOOL_NAME" >> ~/.workie/claude.log'
-    - 'security-check.sh "$TOOL_NAME"'
-
-  # After Claude successfully uses a tool
-  claude_post_tool_use:
-    - 'test "$TOOL_NAME" = "Edit" && npm run lint || true'
-
-  # When user submits a prompt
-  claude_user_prompt_submit:
-    - 'echo "New prompt received" | notify-send'
-
-  # When Claude finishes responding
-  claude_stop:
-    - 'npm test --silent'
-    - 'git diff --stat'
-
-  # Other supported hooks
-  claude_notification:        # On Claude notifications
-  claude_subagent_stop:      # When subagent finishes
-  claude_pre_compact:        # Before context compaction
-```
-
-### System Notifications
-
-Workie can send system notifications when Claude Code events occur. This is particularly useful for the `claude_notification` hook to alert you when Claude needs your attention.
-
-```yaml
-hooks:
-  # Claude notification hooks
+    
+  # When Claude sends notifications
   claude_notification:
-    - 'echo "Notification: $MESSAGE" >> ~/.workie/notifications.log'
-    - 'play-sound.sh'  # Your custom notification sound
-  
+    - 'echo "Notification: $MESSAGE"'
+    
   # Enable system notifications
   system_notifications:
     enabled: true
-    title: "Workie - Claude Code"  # Optional: custom title
-    icon: "assets/icon.png"         # Optional: custom icon path
+    title: "Workie Alert"
 ```
 
-When enabled, Workie will:
-1. Execute all configured `claude_notification` hooks
-2. Send a native system notification with the Claude message
-3. Support cross-platform notifications (macOS, Linux, Windows)
-
-The notification will appear as a system alert with:
-- **Title**: "Workie - Claude Code" (or your custom title)
-- **Message**: The actual notification from Claude (e.g., "Claude needs your permission to use Bash")
-- **Icon**: Platform default or your custom icon
-
-### AI-Powered Tool Use Decisions 🤖
-
-Workie can use AI to analyze hook outputs and decide whether to approve or block tool usage:
+### AI-Powered Hook Decisions
 
 ```yaml
 hooks:
   claude_pre_tool_use:
-    # Security scripts that check tool usage
-    - 'check-file-paths.sh'
-    - 'validate-tool-params.sh'
-    - 'policy-enforcer.sh'
-
+    - 'security-check.sh'
+    
   # Enable AI decision making
   ai_decision:
     enabled: true
-    model: "llama3.2"      # Optional: override default
-    strict_mode: false     # If true, any hook failure = block
+    model: "zephyr"
+    strict_mode: false
 ```
 
-#### How AI Decisions Work
+For detailed hook documentation, see [docs/hooks.md](docs/hooks.md).
 
-1. **Hook Execution**: Your security scripts run and produce output
-2. **AI Analysis**: The LLM analyzes:
-   - Tool name and parameters
-   - Script outputs (stdout/stderr)
-   - Exit codes and warnings
-   - Security implications
-3. **Decision**: Returns JSON to Claude Code:
-   ```json
-   {
-     "decision": "block",
-     "reason": "Security policy violation detected"
-   }
-   ```
+## AI Features
 
-### Testing Claude Code Hooks
+### Setup
+
+1. Install [Ollama](https://ollama.com)
+2. Pull a model: `ollama pull zephyr`
+3. Configure in `.workie.yaml`:
+
+```yaml
+ai:
+  enabled: true
+  model:
+    provider: "ollama"
+    name: "zephyr"
+    temperature: 0.7
+    max_tokens: 2048
+  ollama:
+    base_url: "http://localhost:11434"
+    keep_alive: "5m"
+```
+
+### Smart Branch Names
 
 ```bash
-# Create a test scenario
-cat > test-write.json << EOF
-{
-  "tool_name": "Write",
-  "tool_input": {
-    "file_path": "/etc/sensitive.conf",
-    "content": "test data"
-  }
-}
-EOF
+# Standard: fix/123-update-user-authentication-to-support-oauth2
+workie begin --issue 123
 
-# Test your hooks with AI decision
-workie hooks claude-test --input test-write.json --ai
-
-# Test without AI (rule-based only)
-workie hooks claude-test --input test-write.json
+# AI-powered: fix/123-oauth2-auth
+workie begin --issue 123 --ai
 ```
 
-### Example: Security Policy Enforcement
+### Code Assistant
+
+```bash
+# Understanding code
+workie ask "What does the WorktreeManager do?"
+
+# Finding files
+workie ask -t "Find all test files for authentication"
+
+# Generating code
+workie ask -t "Create a unit test for parseIssueReference"
+
+# Git operations
+workie ask -t "Show me the last 5 commits"
+```
+
+## Issue Provider Integration
+
+### GitHub
 
 ```yaml
-hooks:
-  claude_pre_tool_use:
-    - |
-      #!/bin/bash
-      # Inline security check
-      case "$TOOL_NAME" in
-        Write|Edit)
-          if [[ "$1" =~ ^/etc/|^/sys/|^/root/ ]]; then
-            echo "BLOCKED: System file modification attempt" >&2
-            exit 1
-          fi
-          ;;
-        Bash)
-          echo "WARNING: Shell execution requested" >&2
-          ;;
-      esac
-    - 'audit-log.sh "$TOOL_NAME" "$@"'
+providers:
+  github:
+    enabled: true
+    settings:
+      token_env: "GITHUB_TOKEN"
+      owner: "your-org"
+      repo: "your-repo"
+    branch_prefix:
+      bug: "fix/"
+      feature: "feat/"
+      default: "issue/"
 ```
 
-### Example: Development Workflow Automation
+### Jira
 
 ```yaml
-hooks:
-  # Auto-format on edit
-  claude_post_tool_use:
-    - 'test "$TOOL_NAME" = "Edit" && prettier --write . || true'
-
-  # Run tests after Claude finishes
-  claude_stop:
-    - 'npm test'
-    - 'echo "✅ Session complete. Test results above."'
-
-  # Track Claude's activity
-  claude_pre_tool_use:
-    - 'echo "[$(date)] $TOOL_NAME" >> ~/.claude-activity.log'
+providers:
+  jira:
+    enabled: true
+    settings:
+      base_url: "https://your-company.atlassian.net"
+      email_env: "JIRA_EMAIL"
+      api_token_env: "JIRA_TOKEN"
+      project: "PROJ"
+    branch_prefix:
+      bug: "bugfix/"
+      story: "feature/"
+      default: "jira/"
 ```
 
-### Configuring Claude Code to Use Workie Hooks
+### Using Issue Providers
 
-To integrate Workie with Claude Code's native hook system, you need to modify your Claude settings file. Here's how:
+```bash
+# List issues
+workie issues
+workie issues --provider github
 
-1. **Locate your Claude settings file**:
-   - User settings: `~/.claude/settings.json`
-   - Project settings: `.claude/settings.json` (in your project root)
-   - Local settings: `.claude/settings.local.json` (not committed to git)
+# View issue details
+workie issues github:123
+workie issues jira:PROJ-456
 
-2. **Add Workie hook commands to your Claude settings**:
+# Create worktree from issue
+workie issues github:123 --create
+workie issues jira:PROJ-456 -c
+
+# Filter issues
+workie issues --assignee me --status open
+workie issues --labels bug,urgent
+```
+
+## Advanced Usage
+
+### File Copying
+
+Workie automatically copies specified files to new worktrees:
+
+```yaml
+files_to_copy:
+  - .env.example          # Environment template
+  - scripts/              # Utility scripts (copied recursively)
+  - config/dev.yaml       # Development config
+  - docker-compose.yml    # Docker setup
+```
+
+**Directory Structure Example:**
+
+```
+your-project/                    # Main repository
+├── .workie.yaml
+├── .env.example
+└── scripts/
+
+your-project-worktrees/          # Created automatically
+└── feature-new-ui/
+    ├── .env.example            # ✓ Copied
+    └── scripts/                # ✓ Copied recursively
+```
+
+### Claude Code Settings Integration
+
+To use Workie hooks with Claude Code:
+
+1. Edit Claude settings (`~/.claude/settings.json`):
 
 ```json
 {
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Write|Edit",
         "hooks": [
           {
             "type": "command",
             "command": "workie hooks run claude_pre_tool_use"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "workie hooks run claude_post_tool_use"
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "workie hooks run claude_user_prompt_submit"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "workie hooks run claude_stop"
-          }
-        ]
-      }
-    ],
-    "Notification": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "workie hooks run claude_notification"
           }
         ]
       }
@@ -697,222 +393,97 @@ To integrate Workie with Claude Code's native hook system, you need to modify yo
 }
 ```
 
-3. **Configure your Workie hooks** in `.workie.yaml`:
+2. Configure Workie hooks in `.workie.yaml`
+3. Test: `workie hooks test`
+
+### Security Policy Example
 
 ```yaml
 hooks:
   claude_pre_tool_use:
-    - 'echo "Tool: $TOOL_NAME" >> ~/.workie/claude-activity.log'
-    - 'security-check.sh "$TOOL_NAME"'
-
-  claude_post_tool_use:
-    - 'test "$TOOL_NAME" = "Edit" && npm run lint || true'
-
-  claude_stop:
-    - 'npm test'
-    - 'git status --short'
-
-  # Enable AI decision making for security
-  ai_decision:
-    enabled: true
-    model: "zephyr"
+    - |
+      case "$TOOL_NAME" in
+        Write|Edit)
+          if [[ "$1" =~ ^/etc/|^/sys/ ]]; then
+            echo "BLOCKED: System file modification" >&2
+            exit 1
+          fi
+          ;;
+      esac
 ```
 
-4. **Test the integration**:
+## Troubleshooting
 
+### Common Issues
+
+**Configuration not found:**
 ```bash
-# Test that Claude Code can call Workie hooks
+# Ensure .workie.yaml exists
+ls -la .workie.yaml
+
+# Initialize if missing
+workie init
+```
+
+**AI features not working:**
+```bash
+# Check Ollama is running
+ollama list
+
+# Pull required model
+ollama pull zephyr
+```
+
+**Hooks not triggering:**
+```bash
+# Test hooks manually
 workie hooks test
 
-# Manually test a specific hook type
-workie hooks run claude_pre_tool_use
-
-# Test with Claude Code input simulation
-echo '{"tool_name":"Write","tool_input":{"file_path":"/tmp/test.txt"}}' | workie hooks claude-test --ai
+# Check Claude Code settings
+cat ~/.claude/settings.json
 ```
 
-This setup allows you to:
-- Use Workie's configuration management for your Claude Code hooks
-- Leverage Workie's AI decision-making capabilities for tool approval/blocking
-- Maintain hook configurations in version control with your project
-- Test hooks independently before using them with Claude Code
-
-### Best Practices for Claude Code Hooks
-
-1. **Test Thoroughly**: Always test hooks in a safe environment first
-2. **Fail Gracefully**: Use `|| true` to prevent blocking on non-critical failures
-3. **Log Everything**: Keep audit logs of tool usage and decisions
-4. **Performance**: Keep hooks fast to avoid slowing down Claude Code
-5. **Security First**: Implement defense in depth with multiple validation layers
-
-### Troubleshooting
-
-- **Hooks not triggering**: Ensure Claude Code is configured to use your hooks
-- **AI decisions failing**: Check that Ollama is running and the model is available
-- **Performance issues**: Reduce hook complexity or increase timeout settings
-- **False positives**: Tune your security scripts and AI prompts
-
-Remember: This integration is experimental. Always have backups and test in isolated environments!
-
-## AI Configuration
-
-Workie integrates with Ollama for local AI capabilities. Configure AI features in your `.workie.yaml`:
-
-```yaml
-ai:
-  enabled: true
-  model:
-    provider: "ollama"
-    name: "llama3.2"         # or any Ollama model you have installed
-    temperature: 0.7
-    max_tokens: 2048
-  ollama:
-    base_url: "http://localhost:11434"  # Default Ollama URL
-    keep_alive: "5m"
-```
-
-### Setting Up AI Features
-
-1. **Install Ollama**: Download from https://ollama.com
-2. **Pull a model**: Run `ollama pull llama3.2` or your preferred model
-3. **Enable in config**: Set `ai.enabled: true` in your `.workie.yaml`
-
-### AI Use Cases
-
-#### Smart Branch Names from Issues
-When creating branches from issues, AI analyzes the issue context to generate descriptive names:
+### Getting Help
 
 ```bash
-# Standard branch name: fix/123-update-user-authentication-to-support-oauth2
-workie begin --issue 123
+# Show help
+workie --help
 
-# AI-generated name: fix/123-oauth2-auth
-workie begin --issue 123 --ai
+# Show version and build info
+workie --version
+
+# Report issues
+# https://github.com/agoodway/workie/issues
 ```
 
-#### Intelligent Code Assistant
-Ask questions about your codebase and get context-aware answers:
+## How It Works
 
-```bash
-# Understanding code
-workie ask "What does the WorktreeManager do?"
+1. **Repository Detection**: Uses `git rev-parse --show-toplevel`
+2. **Configuration Loading**: Reads `.workie.yaml` from repo root
+3. **Worktree Creation**: Creates `<repo>-worktrees/` directory
+4. **Branch Management**: Creates new branches in separate worktrees
+5. **File Copying**: Copies configured files to new worktrees
+6. **Hook Execution**: Runs configured hooks at appropriate times
 
-# Finding files
-workie ask -t "Find all test files related to authentication"
+## Vision
 
-# Generating code
-workie ask -t "Create a unit test for the parseIssueReference function"
+Workie is evolving into a comprehensive agentic coding assistant that:
 
-# Git operations
-workie ask -t "Show me the last 5 commits with their messages"
-```
+- **Learns your patterns** - Adapts to your coding style
+- **Automates repetitive tasks** - From branch creation to testing
+- **Provides intelligent suggestions** - Context-aware recommendations
+- **Integrates seamlessly** - Works with your existing tools
+- **Evolves with AI** - Leverages latest AI technologies
 
-## Issue Provider Configuration
-
-Workie can connect to GitHub, Jira, and Linear to fetch issues and create worktrees based on them. Configure providers in your `.workie.yaml`:
-
-### Setting a Default Provider
-
-You can set a default provider to use when no provider is specified in issue commands:
-
-```yaml
-default_provider: github
-```
-
-With this setting, you can use simplified commands:
-- `workie issues 123` instead of `workie issues github:123`
-- `workie issues 123 --create` instead of `workie issues github:123 --create`
-
-### GitHub Provider
-
-```yaml
-providers:
-  github:
-    enabled: true
-    settings:
-      token_env: "GITHUB_TOKEN"  # Environment variable with your GitHub token
-      owner: "your-org"          # Repository owner or organization
-      repo: "your-repo"          # Repository name
-    branch_prefix:
-      bug: "fix/"
-      feature: "feat/"
-      default: "issue/"
-```
-
-### Jira Provider
-
-```yaml
-providers:
-  jira:
-    enabled: true
-    settings:
-      base_url: "https://your-company.atlassian.net"
-      email_env: "JIRA_EMAIL"      # Environment variable with your Jira email
-      api_token_env: "JIRA_TOKEN"  # Environment variable with your Jira API token
-      project: "PROJ"              # Default project key
-    branch_prefix:
-      bug: "bugfix/"
-      story: "feature/"
-      task: "task/"
-      default: "jira/"
-```
-
-### Linear Provider
-
-```yaml
-providers:
-  linear:
-    enabled: true
-    settings:
-      api_key_env: "LINEAR_API_KEY"  # Environment variable with your Linear API key
-      team_id: "TEAM"                # Optional: filter by team
-    branch_prefix:
-      bug: "fix/"
-      feature: "feat/"
-      default: "linear/"
-```
-
-### Setting Up Authentication
-
-1. **GitHub**: Create a personal access token at https://github.com/settings/tokens
-2. **Jira**: Create an API token at https://id.atlassian.com/manage-profile/security/api-tokens
-3. **Linear**: Create an API key at https://linear.app/settings/api
-
-Store these tokens in environment variables:
-
-```bash
-export GITHUB_TOKEN="your-github-token"
-export JIRA_EMAIL="your-email@company.com"
-export JIRA_TOKEN="your-jira-api-token"
-export LINEAR_API_KEY="your-linear-api-key"
-```
-
-## Error Handling
-
-- **Not in Git Repository**: Shows clear error message
-- **Branch Already Exists**: Prevents duplicate branches
-- **Missing Configuration Files**: Shows warnings but continues
-- **File Copy Errors**: Shows warnings for individual files but continues
-
-## Dependencies
-
-- [Cobra](https://github.com/spf13/cobra) - CLI framework
-- [yaml.v3](https://gopkg.in/yaml.v3) - YAML parsing
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Future roadmap includes:
+- Automated testing generation
+- Intelligent refactoring suggestions
+- Context-aware development assistance
+- Advanced workflow automation
 
 ## Contributing
 
-We welcome contributions! Please read our [Contributing Guide](CONTRIBUTING.md) for details on:
-
-- How to set up your development environment
-- Our code style and standards
-- The pull request process
-- How to report issues
-
-For major changes, please open an issue first to discuss what you would like to change.
+We welcome contributions! Please read our [Contributing Guide](CONTRIBUTING.md) for details.
 
 ### Quick Start for Contributors
 
@@ -923,4 +494,6 @@ For major changes, please open an issue first to discuss what you would like to 
 5. Push to the branch (`git push origin feature/amazing-feature`)
 6. Open a Pull Request
 
-See our [Contributing Guide](CONTRIBUTING.md) for detailed instructions.
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
