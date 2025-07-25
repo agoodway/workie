@@ -15,9 +15,9 @@ import (
 
 // Options holds configuration options for the WorktreeManager
 type Options struct {
-	ConfigFile string // Path to custom config file
-	Verbose    bool   // Enable verbose output
-	Quiet      bool   // Enable quiet mode
+	ConfigFile       string // Path to custom config file
+	Verbose          bool   // Enable verbose output
+	Quiet            bool   // Enable quiet mode
 	ShowInitMessages bool   // Show initialization messages (git repo detection, config loading)
 }
 
@@ -673,7 +673,6 @@ func (wm *WorktreeManager) HasPostCreateHooks() bool {
 func (wm *WorktreeManager) HasPreRemoveHooks() bool {
 	return wm.Config != nil && wm.Config.Hooks != nil && len(wm.Config.Hooks.PreRemove) > 0
 }
-
 
 // parseCommand splits command strings into executable parts
 // It handles shell-style commands with pipes, redirects, etc.

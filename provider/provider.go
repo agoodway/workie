@@ -20,10 +20,10 @@ type Issue struct {
 
 // IssueList represents a list of issues with pagination info
 type IssueList struct {
-	Issues      []Issue
-	TotalCount  int
-	HasMore     bool
-	NextCursor  string // For cursor-based pagination
+	Issues     []Issue
+	TotalCount int
+	HasMore    bool
+	NextCursor string // For cursor-based pagination
 }
 
 // Provider defines the interface for issue tracking providers
@@ -49,21 +49,21 @@ type Provider interface {
 
 // ListFilter defines filtering options for listing issues
 type ListFilter struct {
-	Status     string   // Filter by status (open, closed, in-progress, etc.)
-	Assignee   string   // Filter by assignee
-	Labels     []string // Filter by labels
-	Type       string   // Filter by issue type
-	Limit      int      // Maximum number of issues to return
-	Cursor     string   // Pagination cursor
-	Query      string   // Free-text search query
+	Status   string   // Filter by status (open, closed, in-progress, etc.)
+	Assignee string   // Filter by assignee
+	Labels   []string // Filter by labels
+	Type     string   // Filter by issue type
+	Limit    int      // Maximum number of issues to return
+	Cursor   string   // Pagination cursor
+	Query    string   // Free-text search query
 }
 
 // ProviderConfig represents configuration for a provider
 type ProviderConfig struct {
-	Enabled       bool                       `yaml:"enabled"`
-	Type          string                     `yaml:"type"` // github, jira, linear
-	BranchPrefix  map[string]string          `yaml:"branch_prefix,omitempty"`
-	Settings      map[string]interface{}     `yaml:"settings,omitempty"`
+	Enabled      bool                   `yaml:"enabled"`
+	Type         string                 `yaml:"type"` // github, jira, linear
+	BranchPrefix map[string]string      `yaml:"branch_prefix,omitempty"`
+	Settings     map[string]interface{} `yaml:"settings,omitempty"`
 }
 
 // Registry manages available providers
@@ -123,14 +123,14 @@ func ParseIssueReference(ref string) (provider, issueID string, err error) {
 	if len(parts) != 2 {
 		return "", "", fmt.Errorf("invalid issue reference format: expected 'provider:id', got '%s'", ref)
 	}
-	
+
 	provider = strings.ToLower(strings.TrimSpace(parts[0]))
 	issueID = strings.TrimSpace(parts[1])
-	
+
 	if provider == "" || issueID == "" {
 		return "", "", fmt.Errorf("invalid issue reference: provider and ID cannot be empty")
 	}
-	
+
 	return provider, issueID, nil
 }
 
@@ -170,26 +170,26 @@ func SanitizeBranchName(name string) string {
 		"=", "-",
 		"+", "-",
 	)
-	
+
 	name = replacer.Replace(name)
-	
+
 	// Replace multiple consecutive hyphens with a single hyphen
 	for strings.Contains(name, "--") {
 		name = strings.ReplaceAll(name, "--", "-")
 	}
-	
+
 	// Remove leading and trailing hyphens
 	name = strings.Trim(name, "-")
-	
+
 	// Convert to lowercase
 	name = strings.ToLower(name)
-	
+
 	// Limit length to 63 characters (git branch name limit is 255, but let's be conservative)
 	if len(name) > 63 {
 		name = name[:63]
 		// Remove trailing hyphen if truncation created one
 		name = strings.TrimRight(name, "-")
 	}
-	
+
 	return name
 }

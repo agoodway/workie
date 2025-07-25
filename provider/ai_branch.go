@@ -24,42 +24,42 @@ func NewAIBranchNameGenerator(llm llms.Model) *AIBranchNameGenerator {
 func (g *AIBranchNameGenerator) GenerateBranchName(issue *Issue, branchPrefix string) (string, error) {
 	// Build the prompt
 	prompt := g.buildPrompt(issue, branchPrefix)
-	
+
 	// Call the AI model
 	ctx := context.Background()
 	response, err := g.llm.Call(ctx, prompt)
 	if err != nil {
 		return "", fmt.Errorf("AI model error: %w", err)
 	}
-	
+
 	// Extract and clean the branch name from the response
 	branchName := strings.TrimSpace(response)
 	branchName = strings.Trim(branchName, "`\"'")
-	
+
 	// Validate the generated branch name
 	if !strings.HasPrefix(branchName, branchPrefix) {
 		// If AI didn't include the prefix, add it
 		branchName = fmt.Sprintf("%s%s-%s", branchPrefix, strings.ToLower(issue.ID), branchName)
 	}
-	
+
 	// Ensure it's properly sanitized
 	branchName = SanitizeBranchName(branchName)
-	
+
 	// Final validation
 	if len(branchName) > 63 {
 		// Fallback to traditional method if AI generates too long name
 		return g.fallbackBranchName(issue, branchPrefix), nil
 	}
-	
+
 	return branchName, nil
 }
 
 // buildPrompt creates the AI prompt for branch name generation
 func (g *AIBranchNameGenerator) buildPrompt(issue *Issue, branchPrefix string) string {
 	// Prepare issue context
-	issueContext := fmt.Sprintf("Issue ID: %s\nType: %s\nTitle: %s", 
+	issueContext := fmt.Sprintf("Issue ID: %s\nType: %s\nTitle: %s",
 		issue.ID, issue.Type, issue.Title)
-	
+
 	if issue.Description != "" {
 		// Limit description length
 		desc := issue.Description
@@ -68,11 +68,11 @@ func (g *AIBranchNameGenerator) buildPrompt(issue *Issue, branchPrefix string) s
 		}
 		issueContext += fmt.Sprintf("\nDescription: %s", desc)
 	}
-	
+
 	if len(issue.Labels) > 0 {
 		issueContext += fmt.Sprintf("\nLabels: %s", strings.Join(issue.Labels, ", "))
 	}
-	
+
 	return fmt.Sprintf(`Generate a Git branch name for the following issue:
 
 %s
@@ -97,16 +97,16 @@ Generate ONLY the branch name, nothing else:`, issueContext, branchPrefix, strin
 // fallbackBranchName generates a branch name using the traditional method
 func (g *AIBranchNameGenerator) fallbackBranchName(issue *Issue, branchPrefix string) string {
 	suffix := SanitizeBranchName(issue.Title)
-	
+
 	// Truncate suffix to keep it concise
 	words := strings.Split(suffix, "-")
 	if len(words) > 5 {
 		words = words[:5]
 	}
 	suffix = strings.Join(words, "-")
-	
+
 	branchName := fmt.Sprintf("%s%s-%s", branchPrefix, strings.ToLower(issue.ID), suffix)
-	
+
 	// Ensure total length doesn't exceed 63 characters
 	if len(branchName) > 63 {
 		prefixLen := len(branchPrefix) + len(issue.ID) + 1
@@ -117,6 +117,6 @@ func (g *AIBranchNameGenerator) fallbackBranchName(issue *Issue, branchPrefix st
 			branchName = fmt.Sprintf("%s%s-%s", branchPrefix, strings.ToLower(issue.ID), suffix)
 		}
 	}
-	
+
 	return branchName
 }

@@ -69,12 +69,12 @@ func (f *FileSystemTool) Execute(ctx context.Context, params map[string]interfac
 
 	// Clean and resolve the path
 	path = filepath.Clean(path)
-	
+
 	// If path is relative, join it with base directory
 	if !filepath.IsAbs(path) {
 		path = filepath.Join(baseDir, path)
 	}
-	
+
 	// Resolve any symlinks
 	resolvedPath, err := filepath.EvalSymlinks(path)
 	if err != nil {
@@ -101,16 +101,16 @@ func (f *FileSystemTool) Execute(ctx context.Context, params map[string]interfac
 			limit = int(limitParam)
 		}
 		return f.readFile(path, limit)
-		
+
 	case "list":
 		return f.listDirectory(path)
-		
+
 	case "exists":
 		return f.checkExists(path)
-		
+
 	case "info":
 		return f.getFileInfo(path)
-		
+
 	default:
 		return "", fmt.Errorf("unknown operation: %s", operation)
 	}
@@ -144,15 +144,15 @@ func (f *FileSystemTool) listDirectory(path string) (string, error) {
 			continue
 		}
 
-		line := fmt.Sprintf("%s %10d %s", 
-			info.Mode().String(), 
-			info.Size(), 
+		line := fmt.Sprintf("%s %10d %s",
+			info.Mode().String(),
+			info.Size(),
 			entry.Name())
-		
+
 		if entry.IsDir() {
 			line += "/"
 		}
-		
+
 		result = append(result, line)
 	}
 

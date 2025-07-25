@@ -37,7 +37,7 @@ func NewProvider(config map[string]interface{}) (*Provider, error) {
 		if baseURL, ok := settings["base_url"].(string); ok {
 			p.baseURL = strings.TrimRight(baseURL, "/")
 		}
-		
+
 		// Authentication
 		if emailEnv, ok := settings["email_env"].(string); ok {
 			p.email = os.Getenv(emailEnv)
@@ -45,7 +45,7 @@ func NewProvider(config map[string]interface{}) (*Provider, error) {
 		if tokenEnv, ok := settings["api_token_env"].(string); ok {
 			p.apiToken = os.Getenv(tokenEnv)
 		}
-		
+
 		// Project key
 		if project, ok := settings["project"].(string); ok {
 			p.project = project
@@ -99,7 +99,7 @@ func (p *Provider) ListIssues(filter provider.ListFilter) (*provider.IssueList, 
 
 	// Build JQL query
 	jql := fmt.Sprintf("project = %s", p.project)
-	
+
 	// Status filter
 	if filter.Status != "" {
 		switch strings.ToLower(filter.Status) {
@@ -212,7 +212,7 @@ func (p *Provider) GetIssue(issueID string) (*provider.Issue, error) {
 	}
 
 	url := fmt.Sprintf("%s/rest/api/3/issue/%s", p.baseURL, issueID)
-	
+
 	resp, err := p.makeRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -231,7 +231,7 @@ func (p *Provider) GetIssue(issueID string) (*provider.Issue, error) {
 // CreateBranchName generates a branch name based on the issue
 func (p *Provider) CreateBranchName(issue *provider.Issue) string {
 	prefix := p.branchPrefix["default"]
-	
+
 	// Use issue type to determine prefix
 	issueTypeLower := strings.ToLower(issue.Type)
 	if strings.Contains(issueTypeLower, "bug") {
@@ -302,7 +302,7 @@ func (p *Provider) convertIssue(jiraIssue jiraIssue) provider.Issue {
 		"created_at": jiraIssue.Fields.Created,
 		"updated_at": jiraIssue.Fields.Updated,
 	}
-	
+
 	if jiraIssue.Fields.Reporter != nil {
 		metadata["reporter"] = jiraIssue.Fields.Reporter.DisplayName
 	}
@@ -326,7 +326,7 @@ func (p *Provider) convertIssue(jiraIssue jiraIssue) provider.Issue {
 // extractTextFromADF extracts plain text from Atlassian Document Format
 func extractTextFromADF(adf map[string]interface{}) string {
 	var texts []string
-	
+
 	if content, ok := adf["content"].([]interface{}); ok {
 		for _, node := range content {
 			if nodeMap, ok := node.(map[string]interface{}); ok {
@@ -344,7 +344,7 @@ func extractTextFromADF(adf map[string]interface{}) string {
 			}
 		}
 	}
-	
+
 	return strings.Join(texts, "\n")
 }
 
@@ -362,15 +362,15 @@ type jiraIssue struct {
 }
 
 type jiraFields struct {
-	Summary     string          `json:"summary"`
-	Description interface{}     `json:"description"` // Can be string or ADF object
-	IssueType   jiraIssueType   `json:"issuetype"`
-	Status      jiraStatus      `json:"status"`
-	Labels      []string        `json:"labels"`
-	Created     string          `json:"created"`
-	Updated     string          `json:"updated"`
-	Reporter    *jiraUser       `json:"reporter"`
-	Assignee    *jiraUser       `json:"assignee"`
+	Summary     string        `json:"summary"`
+	Description interface{}   `json:"description"` // Can be string or ADF object
+	IssueType   jiraIssueType `json:"issuetype"`
+	Status      jiraStatus    `json:"status"`
+	Labels      []string      `json:"labels"`
+	Created     string        `json:"created"`
+	Updated     string        `json:"updated"`
+	Reporter    *jiraUser     `json:"reporter"`
+	Assignee    *jiraUser     `json:"assignee"`
 }
 
 type jiraIssueType struct {
@@ -382,6 +382,6 @@ type jiraStatus struct {
 }
 
 type jiraUser struct {
-	DisplayName string `json:"displayName"`
+	DisplayName  string `json:"displayName"`
 	EmailAddress string `json:"emailAddress"`
 }

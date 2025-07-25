@@ -38,7 +38,7 @@ func NewProvider(config map[string]interface{}) (*Provider, error) {
 		if apiKeyEnv, ok := settings["api_key_env"].(string); ok {
 			p.apiKey = os.Getenv(apiKeyEnv)
 		}
-		
+
 		// Team ID
 		if teamID, ok := settings["team_id"].(string); ok {
 			p.teamID = teamID
@@ -283,7 +283,7 @@ func (p *Provider) GetIssue(issueID string) (*provider.Issue, error) {
 // CreateBranchName generates a branch name based on the issue
 func (p *Provider) CreateBranchName(issue *provider.Issue) string {
 	prefix := p.branchPrefix["default"]
-	
+
 	// Determine prefix based on issue metadata
 	if stateType, ok := issue.Metadata["state_type"]; ok {
 		switch stateType {
@@ -383,7 +383,7 @@ func (p *Provider) convertIssue(linearIssue linearIssue) provider.Issue {
 		"updated_at": linearIssue.UpdatedAt,
 		"state_type": linearIssue.State.Type,
 	}
-	
+
 	if linearIssue.Creator.Name != "" {
 		metadata["creator"] = linearIssue.Creator.Name
 	}

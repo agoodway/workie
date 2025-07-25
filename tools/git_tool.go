@@ -56,7 +56,7 @@ func (g *GitTool) Execute(ctx context.Context, params map[string]interface{}) (s
 
 	// Build the git command
 	args := []string{command}
-	
+
 	// Add additional arguments if provided
 	if argsParam, ok := params["args"].([]interface{}); ok {
 		for _, arg := range argsParam {

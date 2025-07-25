@@ -14,10 +14,10 @@ import (
 
 // Provider implements the Provider interface for GitHub
 type Provider struct {
-	token       string
-	owner       string
-	repo        string
-	baseURL     string
+	token        string
+	owner        string
+	repo         string
+	baseURL      string
 	branchPrefix map[string]string
 }
 
@@ -38,7 +38,7 @@ func NewProvider(config map[string]interface{}) (*Provider, error) {
 		if tokenEnv, ok := settings["token_env"].(string); ok {
 			p.token = os.Getenv(tokenEnv)
 		}
-		
+
 		// Repository information
 		if owner, ok := settings["owner"].(string); ok {
 			p.owner = owner
@@ -46,7 +46,7 @@ func NewProvider(config map[string]interface{}) (*Provider, error) {
 		if repo, ok := settings["repo"].(string); ok {
 			p.repo = repo
 		}
-		
+
 		// Custom base URL for GitHub Enterprise
 		if baseURL, ok := settings["base_url"].(string); ok {
 			p.baseURL = strings.TrimRight(baseURL, "/")
@@ -97,7 +97,7 @@ func (p *Provider) ListIssues(filter provider.ListFilter) (*provider.IssueList, 
 
 	// Build query parameters
 	params := make(map[string]string)
-	
+
 	// Status mapping
 	if filter.Status != "" {
 		switch strings.ToLower(filter.Status) {
@@ -140,7 +140,7 @@ func (p *Provider) ListIssues(filter provider.ListFilter) (*provider.IssueList, 
 
 	// Build URL
 	url := fmt.Sprintf("%s/repos/%s/%s/issues", p.baseURL, p.owner, p.repo)
-	
+
 	// Make request
 	resp, err := p.makeRequest("GET", url, params)
 	if err != nil {
@@ -161,7 +161,7 @@ func (p *Provider) ListIssues(filter provider.ListFilter) (*provider.IssueList, 
 		if ghIssue.PullRequest != nil {
 			continue
 		}
-		
+
 		issues = append(issues, p.convertIssue(ghIssue))
 	}
 
@@ -192,7 +192,7 @@ func (p *Provider) GetIssue(issueID string) (*provider.Issue, error) {
 	}
 
 	url := fmt.Sprintf("%s/repos/%s/%s/issues/%s", p.baseURL, p.owner, p.repo, issueID)
-	
+
 	resp, err := p.makeRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -216,7 +216,7 @@ func (p *Provider) GetIssue(issueID string) (*provider.Issue, error) {
 // CreateBranchName generates a branch name based on the issue
 func (p *Provider) CreateBranchName(issue *provider.Issue) string {
 	prefix := p.branchPrefix["default"]
-	
+
 	// Try to determine issue type from labels
 	for _, label := range issue.Labels {
 		labelLower := strings.ToLower(label)

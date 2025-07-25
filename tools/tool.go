@@ -65,7 +65,7 @@ type ToolResponse struct {
 // FormatToolsPrompt creates a prompt that describes available tools
 func FormatToolsPrompt(tools []Tool) string {
 	toolDescriptions := "You are an AI assistant with access to tools that can execute system commands. You have access to the following tools:\n\n"
-	
+
 	for _, tool := range tools {
 		params, err := json.MarshalIndent(tool.Parameters(), "", "  ")
 		if err != nil {
@@ -78,7 +78,7 @@ func FormatToolsPrompt(tools []Tool) string {
 		toolDescriptions += "Description: " + tool.Description() + "\n"
 		toolDescriptions += "Parameters: " + string(params) + "\n\n"
 	}
-	
+
 	toolDescriptions += `When you need to use a tool to answer a question, respond with ONLY a JSON object in the following format:
 {
   "tool": "tool_name",
@@ -97,7 +97,7 @@ For example, to get the current git branch:
 }
 
 Important: Only output the JSON when using a tool. Do not include any other text with the JSON.`
-	
+
 	return toolDescriptions
 }
 
@@ -107,7 +107,7 @@ func ParseToolCall(response string) (*ToolCall, error) {
 	start := -1
 	end := -1
 	braceCount := 0
-	
+
 	for i, char := range response {
 		if char == '{' {
 			if start == -1 {
@@ -122,28 +122,28 @@ func ParseToolCall(response string) (*ToolCall, error) {
 			}
 		}
 	}
-	
+
 	if start == -1 || end == -1 {
 		return nil, nil // No JSON found
 	}
-	
+
 	jsonStr := response[start:end]
-	
+
 	var rawCall map[string]interface{}
 	if err := json.Unmarshal([]byte(jsonStr), &rawCall); err != nil {
 		return nil, err
 	}
-	
+
 	toolName, ok := rawCall["tool"].(string)
 	if !ok {
 		return nil, nil
 	}
-	
+
 	params, ok := rawCall["parameters"].(map[string]interface{})
 	if !ok {
 		params = make(map[string]interface{})
 	}
-	
+
 	return &ToolCall{
 		Name:       toolName,
 		Parameters: params,

@@ -1,0 +1,22 @@
+# Example Workie configuration with watch settings
+
+# Watch configuration for monitoring worktree conflicts
+watch:
+  enabled: true
+  interval_minutes: 5
+  notify_on_conflicts: true
+  port: 8080
+  branches_to_ignore:
+    - "experimental/*"
+    - "tmp/*"
+
+# System notifications for watch alerts
+hooks:
+  system_notifications:
+    enabled: true
+    title: "Workie Conflict Monitor"
+
+# Files to copy to new worktrees
+files_to_copy:
+  - .env.example
+  - config/

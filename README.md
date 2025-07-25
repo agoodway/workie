@@ -153,6 +153,27 @@ workie hooks claude-config --hooks pre_tool_use,stop
 workie hooks claude-config --output ~/.claude/settings.json
 ```
 
+### Conflict Monitoring
+
+```bash
+# Start the watch server to monitor for rebase conflicts
+workie watch
+
+# Check every 10 minutes instead of default 5
+workie watch --interval 10m
+
+# Use a custom port
+workie watch --port 8081
+
+# Run in quiet mode
+workie watch --quiet
+
+# Access the watch server API
+curl http://localhost:8080/status
+curl http://localhost:8080/conflicts
+curl -X POST http://localhost:8080/check
+```
+
 ## Configuration
 
 Workie uses YAML configuration files to customize behavior. Place `.workie.yaml` in your repository root.
@@ -248,6 +269,22 @@ hooks:
     enabled: true
     model: "zephyr"
     strict_mode: false
+```
+
+### Watch Configuration
+
+Monitor your worktree branches for potential rebase conflicts:
+
+```yaml
+watch:
+  enabled: true
+  interval_minutes: 5       # Check frequency
+  notify_on_conflicts: true # Send system notifications
+  port: 8080               # HTTP server port
+  branches_to_ignore:      # Glob patterns to ignore
+    - "experimental/*"
+    - "tmp/*"
+    - "wip/*"
 ```
 
 For detailed hook documentation, see [docs/hooks.md](docs/hooks.md).

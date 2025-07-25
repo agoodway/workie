@@ -70,7 +70,7 @@ func (c *CommitMessageTool) Execute(ctx context.Context, params map[string]inter
 
 	// Generate commit message based on changes
 	message := c.generateMessage(changes, format)
-	
+
 	return message, nil
 }
 
@@ -264,7 +264,7 @@ func contains(files []string, substr string) bool {
 
 func (c *CommitMessageTool) generateSimpleMessage(modified, added, deleted []string) string {
 	parts := []string{}
-	
+
 	if len(added) > 0 {
 		if len(added) == 1 {
 			parts = append(parts, fmt.Sprintf("Add %s", getFileName(added[0])))
@@ -272,7 +272,7 @@ func (c *CommitMessageTool) generateSimpleMessage(modified, added, deleted []str
 			parts = append(parts, fmt.Sprintf("Add %d files", len(added)))
 		}
 	}
-	
+
 	if len(modified) > 0 {
 		if len(modified) == 1 {
 			parts = append(parts, fmt.Sprintf("Update %s", getFileName(modified[0])))
@@ -280,7 +280,7 @@ func (c *CommitMessageTool) generateSimpleMessage(modified, added, deleted []str
 			parts = append(parts, fmt.Sprintf("Update %d files", len(modified)))
 		}
 	}
-	
+
 	if len(deleted) > 0 {
 		if len(deleted) == 1 {
 			parts = append(parts, fmt.Sprintf("Remove %s", getFileName(deleted[0])))
@@ -288,21 +288,21 @@ func (c *CommitMessageTool) generateSimpleMessage(modified, added, deleted []str
 			parts = append(parts, fmt.Sprintf("Remove %d files", len(deleted)))
 		}
 	}
-	
+
 	if len(parts) == 0 {
 		return "Update files"
 	}
-	
+
 	return strings.Join(parts, ", ")
 }
 
 func (c *CommitMessageTool) generateDetailedMessage(modified, added, deleted []string, changes string) string {
 	var message strings.Builder
-	
+
 	// Start with a summary
 	message.WriteString(c.generateSimpleMessage(modified, added, deleted))
 	message.WriteString("\n\n")
-	
+
 	// Add details
 	if len(added) > 0 {
 		message.WriteString("Added:\n")
@@ -311,7 +311,7 @@ func (c *CommitMessageTool) generateDetailedMessage(modified, added, deleted []s
 		}
 		message.WriteString("\n")
 	}
-	
+
 	if len(modified) > 0 {
 		message.WriteString("Modified:\n")
 		for _, file := range modified {
@@ -319,14 +319,14 @@ func (c *CommitMessageTool) generateDetailedMessage(modified, added, deleted []s
 		}
 		message.WriteString("\n")
 	}
-	
+
 	if len(deleted) > 0 {
 		message.WriteString("Deleted:\n")
 		for _, file := range deleted {
 			message.WriteString("- " + file + "\n")
 		}
 	}
-	
+
 	return strings.TrimSpace(message.String())
 }
 
@@ -348,7 +348,7 @@ func getFileType(path string) string {
 			return "test"
 		}
 	}
-	
+
 	// Check by extension
 	if strings.HasSuffix(path, ".go") {
 		return "go"
@@ -357,7 +357,7 @@ func getFileType(path string) string {
 	} else if strings.HasSuffix(path, ".yaml") || strings.HasSuffix(path, ".yml") {
 		return "config"
 	}
-	
+
 	return "other"
 }
 
@@ -386,8 +386,8 @@ func containsDocs(files []string) bool {
 
 func containsConfig(files []string) bool {
 	for _, file := range files {
-		if strings.HasSuffix(file, ".yaml") || strings.HasSuffix(file, ".yml") || 
-		   strings.HasSuffix(file, ".json") || strings.HasSuffix(file, ".toml") {
+		if strings.HasSuffix(file, ".yaml") || strings.HasSuffix(file, ".yml") ||
+			strings.HasSuffix(file, ".json") || strings.HasSuffix(file, ".toml") {
 			return true
 		}
 	}

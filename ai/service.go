@@ -28,7 +28,7 @@ func NewService(cfg *config.Config) (*Service, error) {
 	opts := []ollama.Option{
 		ollama.WithModel(cfg.AI.Model.Name),
 	}
-	
+
 	if cfg.AI.Ollama.BaseURL != "" {
 		opts = append(opts, ollama.WithServerURL(cfg.AI.Ollama.BaseURL))
 	}
@@ -48,7 +48,7 @@ func NewService(cfg *config.Config) (*Service, error) {
 func (s *Service) AnalyzeToolUse(ctx context.Context, input *hooks.PreToolUseInput, hookResults []hooks.HookExecutionResult) (*hooks.HookDecision, error) {
 	// Build the prompt for the LLM
 	prompt := s.buildDecisionPrompt(input, hookResults)
-	
+
 	// Call the LLM
 	response, err := s.llm.Call(ctx, prompt)
 	if err != nil {
@@ -57,7 +57,7 @@ func (s *Service) AnalyzeToolUse(ctx context.Context, input *hooks.PreToolUseInp
 
 	// Parse the LLM response into a decision
 	decision := s.parseDecision(response, hookResults)
-	
+
 	return decision, nil
 }
 
@@ -72,11 +72,11 @@ func (s *Service) buildDecisionPrompt(input *hooks.PreToolUseInput, hookResults 
 
 	prompt.WriteString("You are a security policy enforcer for Claude Code. ")
 	prompt.WriteString("Analyze the following tool use request and hook script outputs to decide if it should be allowed.\n\n")
-	
+
 	// Tool information
 	prompt.WriteString(fmt.Sprintf("Tool Name: %s\n", input.ToolName))
 	prompt.WriteString("Tool Parameters:\n")
-	
+
 	// Pretty print tool input
 	if inputJSON, err := json.MarshalIndent(input.ToolInput, "  ", "  "); err == nil {
 		prompt.WriteString(string(inputJSON))
@@ -84,15 +84,15 @@ func (s *Service) buildDecisionPrompt(input *hooks.PreToolUseInput, hookResults 
 		prompt.WriteString(fmt.Sprintf("  %v", input.ToolInput))
 	}
 	prompt.WriteString("\n\n")
-	
+
 	// Hook outputs
 	prompt.WriteString("Hook Script Outputs:\n")
 	prompt.WriteString(strings.Repeat("=", 50) + "\n")
-	
+
 	for i, result := range hookResults {
 		prompt.WriteString(fmt.Sprintf("\nHook %d: %s\n", i+1, result.Command))
 		prompt.WriteString(fmt.Sprintf("Exit Code: %d\n", result.ExitCode))
-		
+
 		if result.Stdout != "" {
 			prompt.WriteString("Standard Output:\n")
 			prompt.WriteString(result.Stdout)
@@ -100,7 +100,7 @@ func (s *Service) buildDecisionPrompt(input *hooks.PreToolUseInput, hookResults 
 				prompt.WriteString("\n")
 			}
 		}
-		
+
 		if result.Stderr != "" {
 			prompt.WriteString("Standard Error:\n")
 			prompt.WriteString(result.Stderr)
@@ -108,44 +108,44 @@ func (s *Service) buildDecisionPrompt(input *hooks.PreToolUseInput, hookResults 
 				prompt.WriteString("\n")
 			}
 		}
-		
+
 		if result.Error != nil {
 			prompt.WriteString(fmt.Sprintf("Execution Error: %v\n", result.Error))
 		}
-		
+
 		if result.TimedOut {
 			prompt.WriteString("⚠️  Hook timed out\n")
 		}
-		
+
 		prompt.WriteString(strings.Repeat("-", 30) + "\n")
 	}
-	
+
 	// Decision instructions
 	prompt.WriteString("\nBased on the hook outputs and tool parameters, decide whether to:\n")
 	prompt.WriteString("- APPROVE: Allow the tool to execute (if hooks indicate it's safe)\n")
 	prompt.WriteString("- BLOCK: Prevent the tool from executing (if hooks indicate risks)\n\n")
-	
+
 	prompt.WriteString("Consider:\n")
 	prompt.WriteString("1. Any security warnings or errors from hook scripts\n")
 	prompt.WriteString("2. Exit codes (non-zero usually indicates problems)\n")
 	prompt.WriteString("3. Explicit warnings in stdout/stderr\n")
 	prompt.WriteString("4. The sensitivity of the tool operation\n")
 	prompt.WriteString("5. File paths and their potential impact\n\n")
-	
+
 	prompt.WriteString("Respond with either APPROVE or BLOCK, followed by a brief explanation.\n")
 	prompt.WriteString("Format: [DECISION] Explanation\n")
 	prompt.WriteString("Example: BLOCK The security scan detected potential issues with the file path.\n")
-	
+
 	return prompt.String()
 }
 
 // parseDecision parses the LLM response into a HookDecision
 func (s *Service) parseDecision(response string, hookResults []hooks.HookExecutionResult) *hooks.HookDecision {
 	response = strings.TrimSpace(response)
-	
+
 	// Default decision if parsing fails
 	decision := &hooks.HookDecision{}
-	
+
 	// Check if any hooks failed with non-zero exit code
 	hasFailures := false
 	for _, result := range hookResults {
@@ -154,10 +154,10 @@ func (s *Service) parseDecision(response string, hookResults []hooks.HookExecuti
 			break
 		}
 	}
-	
+
 	// Parse the response
 	upperResponse := strings.ToUpper(response)
-	
+
 	if strings.HasPrefix(upperResponse, "APPROVE") || strings.HasPrefix(upperResponse, "[APPROVE]") {
 		decision.Decision = "approve"
 		// Extract reason after APPROVE
@@ -191,6 +191,6 @@ func (s *Service) parseDecision(response string, hookResults []hooks.HookExecuti
 		}
 		// Otherwise, let the default permission flow continue (undefined decision)
 	}
-	
+
 	return decision
 }

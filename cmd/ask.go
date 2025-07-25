@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/spf13/cobra"
 	"github.com/agoodway/workie/config"
 	"github.com/agoodway/workie/tools"
+	"github.com/spf13/cobra"
 	"github.com/tmc/langchaingo/llms/ollama"
 )
 
 var (
-	useTools bool
+	useTools   bool
 	askVerbose bool
 )
 

@@ -24,6 +24,15 @@ type SystemNotificationConfig struct {
 	Icon    string `yaml:"icon,omitempty" mapstructure:"icon"`   // Path to notification icon
 }
 
+// WatchConfig represents configuration for the watch command
+type WatchConfig struct {
+	Enabled           bool     `yaml:"enabled" mapstructure:"enabled"`                                 // Enable watch functionality
+	IntervalMinutes   int      `yaml:"interval_minutes,omitempty" mapstructure:"interval_minutes"`     // Check interval in minutes (default: 5)
+	NotifyOnConflicts bool     `yaml:"notify_on_conflicts" mapstructure:"notify_on_conflicts"`         // Send notifications for conflicts
+	BranchesToIgnore  []string `yaml:"branches_to_ignore,omitempty" mapstructure:"branches_to_ignore"` // Glob patterns for branches to ignore
+	Port              int      `yaml:"port,omitempty" mapstructure:"port"`                             // HTTP server port (default: 8080)
+}
+
 // Hooks represents the configuration for lifecycle hooks
 type Hooks struct {
 	PostCreate     []string `yaml:"post_create" mapstructure:"post_create"`
@@ -81,6 +90,7 @@ type Config struct {
 	AI              AIConfig               `yaml:"ai" mapstructure:"ai"`
 	Providers       map[string]interface{} `yaml:"providers,omitempty" mapstructure:"providers"`               // Provider configurations
 	DefaultProvider string                 `yaml:"default_provider,omitempty" mapstructure:"default_provider"` // Default issue provider
+	Watch           *WatchConfig           `yaml:"watch,omitempty" mapstructure:"watch"`                       // Watch configuration
 	LoadedFrom      string                 `yaml:"-" mapstructure:"-"`                                         // Path to the loaded config file (not serialized)
 }
 

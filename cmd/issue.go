@@ -6,22 +6,22 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/spf13/cobra"
 	"github.com/agoodway/workie/manager"
 	"github.com/agoodway/workie/provider"
 	"github.com/agoodway/workie/provider/github"
 	"github.com/agoodway/workie/provider/jira"
 	"github.com/agoodway/workie/provider/linear"
+	"github.com/spf13/cobra"
 )
 
 var (
-	issueProvider   string
-	issueStatus     string
-	issueAssignee   string
-	issueLimit      int
-	issueLabels     []string
-	issueQuery      string
-	issueCreate     bool
+	issueProvider string
+	issueStatus   string
+	issueAssignee string
+	issueLimit    int
+	issueLabels   []string
+	issueQuery    string
+	issueCreate   bool
 )
 
 // issuesCmd represents the issues command
@@ -91,7 +91,7 @@ func runIssue(cmd *cobra.Command, args []string) error {
 
 	// Initialize provider registry
 	registry := provider.NewRegistry()
-	
+
 	// Initialize providers based on configuration
 	if err := initializeProviders(wm, registry); err != nil {
 		return fmt.Errorf("failed to initialize providers: %w", err)
@@ -208,11 +208,11 @@ func handleSpecificIssue(wm *manager.WorktreeManager, registry *provider.Registr
 	if issueCreate {
 		branchName := p.CreateBranchName(issue)
 		fmt.Printf("\n🌳 Creating worktree with branch: %s\n", branchName)
-		
+
 		if err := wm.CreateWorktreeBranch(branchName); err != nil {
 			return fmt.Errorf("failed to create worktree: %w", err)
 		}
-		
+
 		// TODO: Consider adding issue metadata to initial commit message
 	}
 
@@ -231,7 +231,7 @@ func listIssues(wm *manager.WorktreeManager, registry *provider.Registry) error 
 
 	// Get list of providers to query
 	var providersToQuery []string
-	
+
 	// If provider flag is specified, use it
 	if issueProvider != "" {
 		// Filter to specific provider
@@ -325,7 +325,7 @@ func displayIssueDetails(issue *provider.Issue) {
 	fmt.Printf("Type:        %s\n", issue.Type)
 	fmt.Printf("Status:      %s\n", issue.Status)
 	fmt.Printf("URL:         %s\n", issue.URL)
-	
+
 	if len(issue.Labels) > 0 {
 		fmt.Printf("Labels:      %s\n", strings.Join(issue.Labels, ", "))
 	}

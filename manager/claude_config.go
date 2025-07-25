@@ -23,8 +23,8 @@ type ClaudeHooksConfig struct {
 
 // ClaudeHookEntry represents a single hook configuration entry
 type ClaudeHookEntry struct {
-	Matcher string                   `json:"matcher,omitempty"`
-	Hooks   []ClaudeHookDefinition   `json:"hooks"`
+	Matcher string                 `json:"matcher,omitempty"`
+	Hooks   []ClaudeHookDefinition `json:"hooks"`
 }
 
 // ClaudeHookDefinition represents the actual hook command
@@ -48,7 +48,7 @@ var hookTypeMapping = map[string]string{
 func (wm *WorktreeManager) GenerateClaudeConfig(selectedHooks []string, useAI bool) (string, error) {
 	// Determine which hooks to include
 	hooksToInclude := make(map[string]bool)
-	
+
 	if len(selectedHooks) == 0 {
 		// Include all available hooks
 		for hook := range hookTypeMapping {
@@ -138,7 +138,7 @@ func (wm *WorktreeManager) GenerateClaudeConfig(selectedHooks []string, useAI bo
 func normalizeHookName(hook string) string {
 	hook = strings.ToLower(hook)
 	hook = strings.ReplaceAll(hook, "-", "_")
-	
+
 	// Handle shortened names
 	shortcuts := map[string]string{
 		"pre_tool_use":       "claude_pre_tool_use",
@@ -149,16 +149,16 @@ func normalizeHookName(hook string) string {
 		"subagent_stop":      "claude_subagent_stop",
 		"pre_compact":        "claude_pre_compact",
 	}
-	
+
 	if full, exists := shortcuts[hook]; exists {
 		return full
 	}
-	
+
 	// Add claude_ prefix if missing
 	if !strings.HasPrefix(hook, "claude_") {
 		hook = "claude_" + hook
 	}
-	
+
 	return hook
 }
 
@@ -234,7 +234,7 @@ Example: Write|Edit|Bash`, hookType, hookType)
 	// Clean up response
 	matcher := strings.TrimSpace(response)
 	matcher = strings.Trim(matcher, "`\"'")
-	
+
 	return matcher, nil
 }
 
@@ -300,7 +300,7 @@ Respond with ONLY the enhanced JSON configuration, nothing else.`, string(curren
 	// Parse enhanced config
 	var enhancedConfig ClaudeHooksConfig
 	response = strings.TrimSpace(response)
-	
+
 	// Extract JSON from response (handle markdown code blocks)
 	if strings.Contains(response, "```json") {
 		start := strings.Index(response, "```json") + 7

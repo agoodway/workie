@@ -71,7 +71,7 @@ func (t *BranchNameTool) Execute(ctx context.Context, params map[string]interfac
 	issueDescription, _ := params["issue_description"].(string)
 	issueType, _ := params["issue_type"].(string)
 	branchPrefix, _ := params["branch_prefix"].(string)
-	
+
 	// Extract labels
 	var labels []string
 	if labelsRaw, ok := params["issue_labels"].([]interface{}); ok {
@@ -123,16 +123,16 @@ Generate only the branch name, nothing else.`, context, branchPrefix, strings.To
 	// In a real implementation, this would call the AI model
 	// For now, we'll return a generated branch name based on the title
 	suffix := provider.SanitizeBranchName(issueTitle)
-	
+
 	// Truncate suffix to keep it concise
 	words := strings.Split(suffix, "-")
 	if len(words) > 5 {
 		words = words[:5]
 	}
 	suffix = strings.Join(words, "-")
-	
+
 	branchName := fmt.Sprintf("%s%s-%s", branchPrefix, strings.ToLower(issueID), suffix)
-	
+
 	// Ensure total length doesn't exceed 63 characters
 	if len(branchName) > 63 {
 		// Calculate how much we need to truncate the suffix
@@ -147,7 +147,7 @@ Generate only the branch name, nothing else.`, context, branchPrefix, strings.To
 			branchName = fmt.Sprintf("%s%s-%s", branchPrefix, strings.ToLower(issueID), suffix)
 		}
 	}
-	
+
 	// For now, return the generated branch name
 	// In a full integration, this would include the AI response
 	return branchName, nil

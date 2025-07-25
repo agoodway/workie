@@ -90,17 +90,17 @@ affecting your main working directory.`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var branchName string
-		
+
 		// Check if both branch name and issue flag are provided
 		if len(args) > 0 && issueRef != "" {
 			return fmt.Errorf("cannot specify both branch name and --issue flag")
 		}
-		
+
 		// Check if --ai is used without --issue
 		if useAI && issueRef == "" {
 			return fmt.Errorf("--ai flag requires --issue flag")
 		}
-		
+
 		// Get branch name from args if provided
 		if len(args) > 0 {
 			branchName = args[0]
@@ -108,9 +108,9 @@ affecting your main working directory.`,
 
 		// Create manager with options
 		opts := manager.Options{
-			ConfigFile: configFile,
-			Verbose:    verbose,
-			Quiet:      quiet,
+			ConfigFile:       configFile,
+			Verbose:          verbose,
+			Quiet:            quiet,
 			ShowInitMessages: true,
 		}
 		wm := manager.NewWithOptions(opts)
@@ -139,14 +139,14 @@ affecting your main working directory.`,
 		if err := wm.Run(branchName); err != nil {
 			return err
 		}
-		
+
 		return nil
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(beginCmd)
-	
+
 	// Add flags
 	beginCmd.Flags().StringVarP(&issueRef, "issue", "i", "", "Create branch from issue reference (e.g., github:123, jira:PROJ-456, or just 123 if only one provider is configured)")
 	beginCmd.Flags().BoolVar(&useAI, "ai", false, "Use AI to generate more descriptive branch names (requires --issue)")
@@ -156,7 +156,7 @@ func init() {
 func getBranchNameFromIssue(wm *manager.WorktreeManager, issueRef string) (string, error) {
 	// Initialize provider registry
 	registry := provider.NewRegistry()
-	
+
 	// Initialize providers based on configuration
 	if err := initializeBeginProviders(wm, registry); err != nil {
 		return "", fmt.Errorf("failed to initialize providers: %w", err)
@@ -221,7 +221,7 @@ func getBranchNameFromIssue(wm *manager.WorktreeManager, issueRef string) (strin
 
 	// Generate branch name
 	var branchName string
-	
+
 	if useAI {
 		// Use AI to generate branch name
 		aiName, err := generateAIBranchName(wm, p, issue)
@@ -381,7 +381,7 @@ func generateAIBranchName(wm *manager.WorktreeManager, p provider.Provider, issu
 
 	// Create AI branch name generator
 	generator := provider.NewAIBranchNameGenerator(llm)
-	
+
 	// Generate the branch name
 	return generator.GenerateBranchName(issue, prefix)
 }
