@@ -139,6 +139,18 @@ workie hooks test
 # Run specific hooks
 workie hooks run post_create
 workie hooks run claude_notification
+
+# Generate Claude Code settings configuration
+workie hooks claude-config
+
+# Generate config with AI optimization
+workie hooks claude-config --ai
+
+# Generate for specific hooks only
+workie hooks claude-config --hooks pre_tool_use,stop
+
+# Save to file
+workie hooks claude-config --output ~/.claude/settings.json
 ```
 
 ## Configuration
@@ -374,6 +386,29 @@ your-project-worktrees/          # Created automatically
 
 To use Workie hooks with Claude Code:
 
+#### Automatic Configuration Generation
+
+Use the `claude-config` command to generate the required settings:
+
+```bash
+# Generate configuration for all configured hooks
+workie hooks claude-config
+
+# Use AI to generate optimal configuration
+workie hooks claude-config --ai
+
+# Generate for specific hooks only
+workie hooks claude-config --hooks pre_tool_use,post_tool_use,stop
+
+# Save directly to Claude settings
+workie hooks claude-config --output ~/.claude/settings.json
+
+# Append to existing settings (merge manually)
+workie hooks claude-config >> claude-hooks.json
+```
+
+#### Manual Configuration
+
 1. Edit Claude settings (`~/.claude/settings.json`):
 
 ```json
@@ -381,10 +416,32 @@ To use Workie hooks with Claude Code:
   "hooks": {
     "PreToolUse": [
       {
+        "matcher": "Write|Edit|Bash",
         "hooks": [
           {
             "type": "command",
             "command": "workie hooks run claude_pre_tool_use"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "workie hooks run claude_post_tool_use"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "workie hooks run claude_stop"
           }
         ]
       }

@@ -422,6 +422,70 @@ This command reads Claude Code input JSON and executes the hooks with optional A
 	},
 }
 
+var (
+	hooksClaudeConfigOutput string
+	hooksClaudeConfigFormat string
+	hooksClaudeConfigHooks  []string
+	hooksClaudeConfigAI     bool
+)
+
+var hooksClaudeConfigCmd = &cobra.Command{
+	Use:   "claude-config",
+	Short: "Generate Claude Code settings configuration for Workie integration",
+	Long: `Generate Claude Code settings.json configuration to integrate Workie hooks.
+This command creates the necessary hook configuration that you can add to your Claude Code settings.`,
+	Example: `  # Generate config for all hooks
+  workie hooks claude-config
+  
+  # Generate config for specific hooks only
+  workie hooks claude-config --hooks pre_tool_use,post_tool_use,stop
+  
+  # Save to file
+  workie hooks claude-config --output ~/.claude/settings.json
+  
+  # Generate with AI assistance for optimal configuration
+  workie hooks claude-config --ai`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// Get the repository root
+		repoRoot, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("failed to get current directory: %w", err)
+		}
+
+		cfg, err := config.LoadConfig(repoRoot, "")
+		if err != nil {
+			return fmt.Errorf("failed to load config: %w", err)
+		}
+
+		mgr := manager.New()
+		mgr.Config = cfg
+		mgr.RepoPath = repoRoot
+		mgr.Options.Quiet = hooksQuiet
+
+		// Generate the configuration
+		configJSON, err := mgr.GenerateClaudeConfig(hooksClaudeConfigHooks, hooksClaudeConfigAI)
+		if err != nil {
+			return fmt.Errorf("failed to generate Claude config: %w", err)
+		}
+
+		// Output the configuration
+		if hooksClaudeConfigOutput != "" {
+			// Write to file
+			if err := os.WriteFile(hooksClaudeConfigOutput, []byte(configJSON), 0644); err != nil {
+				return fmt.Errorf("failed to write config file: %w", err)
+			}
+			if !hooksQuiet {
+				fmt.Printf(color.GreenString("✓ Claude Code configuration written to %s\n"), hooksClaudeConfigOutput)
+			}
+		} else {
+			// Output to stdout
+			fmt.Println(configJSON)
+		}
+
+		return nil
+	},
+}
+
 // Helper function to test a hook without actually executing it
 func testHook(command string) error {
 	// Parse the command to check if it's valid
@@ -498,6 +562,7 @@ func init() {
 	hooksCmd.AddCommand(hooksTestCmd)
 	hooksCmd.AddCommand(hooksAddCmd)
 	hooksCmd.AddCommand(hooksClaudeTestCmd)
+	hooksCmd.AddCommand(hooksClaudeConfigCmd)
 
 	// Add quiet flag to all subcommands
 	hooksListCmd.Flags().BoolVarP(&hooksQuiet, "quiet", "q", false, "Suppress output")
@@ -505,6 +570,7 @@ func init() {
 	hooksTestCmd.Flags().BoolVarP(&hooksQuiet, "quiet", "q", false, "Suppress output (exit code indicates success)")
 	hooksAddCmd.Flags().BoolVarP(&hooksQuiet, "quiet", "q", false, "Output only the YAML configuration")
 	hooksClaudeTestCmd.Flags().BoolVarP(&hooksQuiet, "quiet", "q", false, "Suppress output (shows only decision JSON)")
+	hooksClaudeConfigCmd.Flags().BoolVarP(&hooksQuiet, "quiet", "q", false, "Suppress output")
 
 	// Add other flags
 	hooksAddCmd.Flags().DurationP("timeout", "t", 0, "Timeout for the hook execution")
@@ -512,4 +578,9 @@ func init() {
 	// Claude test specific flags
 	hooksClaudeTestCmd.Flags().BoolVarP(&hooksAIDecision, "ai", "a", false, "Enable AI decision making")
 	hooksClaudeTestCmd.Flags().StringVarP(&hooksInputFile, "input", "i", "", "Input file containing Claude Code JSON (defaults to stdin)")
+
+	// Claude config specific flags
+	hooksClaudeConfigCmd.Flags().StringVarP(&hooksClaudeConfigOutput, "output", "o", "", "Output file path (defaults to stdout)")
+	hooksClaudeConfigCmd.Flags().StringSliceVar(&hooksClaudeConfigHooks, "hooks", []string{}, "Comma-separated list of hooks to include (defaults to all)")
+	hooksClaudeConfigCmd.Flags().BoolVarP(&hooksClaudeConfigAI, "ai", "a", false, "Use AI to generate optimal hook configuration")
 }

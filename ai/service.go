@@ -61,6 +61,11 @@ func (s *Service) AnalyzeToolUse(ctx context.Context, input *hooks.PreToolUseInp
 	return decision, nil
 }
 
+// CallLLM directly calls the LLM with a prompt
+func (s *Service) CallLLM(ctx context.Context, prompt string) (string, error) {
+	return s.llm.Call(ctx, prompt)
+}
+
 // buildDecisionPrompt creates the prompt for the LLM to analyze the tool use
 func (s *Service) buildDecisionPrompt(input *hooks.PreToolUseInput, hookResults []hooks.HookExecutionResult) string {
 	var prompt strings.Builder
