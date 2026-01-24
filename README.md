@@ -14,7 +14,6 @@ A comprehensive developer assistant that streamlines your coding workflow with a
 - [Installation](#installation)
 - [Basic Usage](#basic-usage)
 - [Configuration](#configuration)
-- [Hooks System](#hooks-system)
 - [AI Features](#ai-features)
 - [Issue Provider Integration](#issue-provider-integration)
 - [Advanced Usage](#advanced-usage)
@@ -36,9 +35,6 @@ workie begin feature/new-ui
 
 # List worktrees
 workie --list
-
-# Ask AI about your code
-workie ask "What does this function do?"
 ```
 
 ## Features
@@ -46,8 +42,7 @@ workie ask "What does this function do?"
 ### Core Features
 
 - 🌳 **Smart Git Worktree Management** - Create and manage git worktrees effortlessly
-- 🤖 **AI-Powered Assistant** - Ask questions and get intelligent responses about your codebase
-- 🪝 **Comprehensive Hooks System** - Automate workflows with lifecycle and Claude Code hooks
+- 🤖 **AI-Powered Assistant** - Generate branch names and commit messages from issue details
 - 📋 **Issue Provider Integration** - Connect with GitHub, Jira, and Linear
 - 🔔 **System Notifications** - Get alerts for important events
 - 📁 **Smart File Copying** - Automatically copy essential files to new worktrees
@@ -109,48 +104,10 @@ workie -l
 # Remove a worktree
 workie finish feature/completed-work
 workie finish feature/old-branch --prune-branch
-```
-
-### AI Assistant
-
-```bash
-# Ask questions about your codebase
-workie ask "What does the main function do?"
-workie ask "How do I add a new provider?"
-
-# Use AI with tools
-workie ask -t "Create a commit message for my changes"
-workie ask -t "List all test files"
 
 # Create AI-powered branch names from issues
 workie begin --issue 123 --ai
 workie begin --issue github:456 --ai
-```
-
-### Hooks Management
-
-```bash
-# List configured hooks
-workie hooks list
-
-# Test all hooks
-workie hooks test
-
-# Run specific hooks
-workie hooks run post_create
-workie hooks run claude_notification
-
-# Generate Claude Code settings configuration
-workie hooks claude-config
-
-# Generate config with AI optimization
-workie hooks claude-config --ai
-
-# Generate for specific hooks only
-workie hooks claude-config --hooks pre_tool_use,stop
-
-# Save to file
-workie hooks claude-config --output ~/.claude/settings.json
 ```
 
 ### Conflict Monitoring
@@ -189,14 +146,6 @@ files_to_copy:
 
 # Default issue provider
 default_provider: github
-
-# Basic hooks
-hooks:
-  post_create:
-    - "npm install"
-    - "cp .env.example .env"
-  pre_remove:
-    - "git status"
 ```
 
 ### Initializing Configuration
@@ -213,81 +162,6 @@ workie init --output my-config.yaml
 # Overwrite existing file
 workie init --force
 ```
-
-## Hooks System
-
-Hooks allow you to automate tasks at different stages of your workflow.
-
-### Lifecycle Hooks
-
-```yaml
-hooks:
-  # After creating a worktree
-  post_create:
-    - "echo 'Welcome to your new worktree!'"
-    - "npm install"
-    
-  # Before removing a worktree  
-  pre_remove:
-    - "echo 'Cleaning up...'"
-    - "git status"
-```
-
-### Claude Code Integration
-
-> ⚠️ **EXPERIMENTAL FEATURE** - Claude Code hooks are unofficial and may break without warning.
-
-```yaml
-hooks:
-  # Before Claude uses a tool
-  claude_pre_tool_use:
-    - 'echo "Tool: $TOOL_NAME" >> activity.log'
-    
-  # After Claude uses a tool
-  claude_post_tool_use:
-    - 'test "$TOOL_NAME" = "Edit" && npm run lint'
-    
-  # When Claude sends notifications
-  claude_notification:
-    - 'echo "Notification: $MESSAGE"'
-    
-  # Enable system notifications
-  system_notifications:
-    enabled: true
-    title: "Workie Alert"
-```
-
-### AI-Powered Hook Decisions
-
-```yaml
-hooks:
-  claude_pre_tool_use:
-    - 'security-check.sh'
-    
-  # Enable AI decision making
-  ai_decision:
-    enabled: true
-    model: "zephyr"
-    strict_mode: false
-```
-
-### Watch Configuration
-
-Monitor your worktree branches for potential rebase conflicts:
-
-```yaml
-watch:
-  enabled: true
-  interval_minutes: 5       # Check frequency
-  notify_on_conflicts: true # Send system notifications
-  port: 8080               # HTTP server port
-  branches_to_ignore:      # Glob patterns to ignore
-    - "experimental/*"
-    - "tmp/*"
-    - "wip/*"
-```
-
-For detailed hook documentation, see [docs/hooks.md](docs/hooks.md).
 
 ## AI Features
 
@@ -318,22 +192,6 @@ workie begin --issue 123
 
 # AI-powered: fix/123-oauth2-auth
 workie begin --issue 123 --ai
-```
-
-### Code Assistant
-
-```bash
-# Understanding code
-workie ask "What does the WorktreeManager do?"
-
-# Finding files
-workie ask -t "Find all test files for authentication"
-
-# Generating code
-workie ask -t "Create a unit test for parseIssueReference"
-
-# Git operations
-workie ask -t "Show me the last 5 commits"
 ```
 
 ## Issue Provider Integration
@@ -419,93 +277,6 @@ your-project-worktrees/          # Created automatically
     └── scripts/                # ✓ Copied recursively
 ```
 
-### Claude Code Settings Integration
-
-To use Workie hooks with Claude Code:
-
-#### Automatic Configuration Generation
-
-Use the `claude-config` command to generate the required settings:
-
-```bash
-# Generate configuration for all configured hooks
-workie hooks claude-config
-
-# Use AI to generate optimal configuration
-workie hooks claude-config --ai
-
-# Generate for specific hooks only
-workie hooks claude-config --hooks pre_tool_use,post_tool_use,stop
-
-# Save directly to Claude settings
-workie hooks claude-config --output ~/.claude/settings.json
-
-# Append to existing settings (merge manually)
-workie hooks claude-config >> claude-hooks.json
-```
-
-#### Manual Configuration
-
-1. Edit Claude settings (`~/.claude/settings.json`):
-
-```json
-{
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Write|Edit|Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "workie hooks run claude_pre_tool_use"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "workie hooks run claude_post_tool_use"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "workie hooks run claude_stop"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-2. Configure Workie hooks in `.workie.yaml`
-3. Test: `workie hooks test`
-
-### Security Policy Example
-
-```yaml
-hooks:
-  claude_pre_tool_use:
-    - |
-      case "$TOOL_NAME" in
-        Write|Edit)
-          if [[ "$1" =~ ^/etc/|^/sys/ ]]; then
-            echo "BLOCKED: System file modification" >&2
-            exit 1
-          fi
-          ;;
-      esac
-```
-
 ## Troubleshooting
 
 ### Common Issues
@@ -528,15 +299,6 @@ ollama list
 ollama pull zephyr
 ```
 
-**Hooks not triggering:**
-```bash
-# Test hooks manually
-workie hooks test
-
-# Check Claude Code settings
-cat ~/.claude/settings.json
-```
-
 ### Getting Help
 
 ```bash
@@ -557,7 +319,6 @@ workie --version
 3. **Worktree Creation**: Creates `<repo>-worktrees/` directory
 4. **Branch Management**: Creates new branches in separate worktrees
 5. **File Copying**: Copies configured files to new worktrees
-6. **Hook Execution**: Runs configured hooks at appropriate times
 
 ## Vision
 
