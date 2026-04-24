@@ -180,26 +180,6 @@ files_to_copy:
 #     - "npm run cleanup"
 
 
-# AI Configuration (Ollama-based Assistant)
-# =========================================
-# Configure AI features for intelligent code assistance
-# ai:
-#   enabled: true
-#   model:
-#     provider: "ollama"
-#     name: "llama3.2"
-#     temperature: 0.7
-#     max_tokens: 2048
-#   ollama:
-#     base_url: "http://localhost:11434"
-#     keep_alive: "5m"
-#   features:
-#     code_analysis: true
-#     code_generation: true
-#     commit_message_generation: true
-#     documentation_generation: true
-
-
 # Tips for Customizing Your Configuration:
 # ========================================
 # 1. Start simple - uncomment just the files you need most
@@ -271,10 +251,25 @@ files_to_copy:
 
 # Issue Provider Usage:
 # ===================
-# - List issues: workie issues
-# - View issue: workie issues github:123
-# - Create worktree from issue: workie issues github:123 --create
-# - Filter issues: workie issues --assignee me --status open
+# - Create worktree from issue: workie begin --issue github:123
+# - Create worktree from Jira issue: workie begin --issue jira:PROJ-456
+# - Use default provider: workie begin --issue 123
+
+# Sprite VM Configuration (Optional)
+# ===================================
+# Configure tools to install on a sprite VM via ` + "`" + `workie setup-sprite` + "`" + `
+
+# sprite:
+#   name: "my-dev-vm"
+#   org: "my-org"
+#   pre_setup:
+#     - "mkdir -p ~/go/bin"
+#     - "echo 'export PATH=$PATH:~/go/bin' >> ~/.bashrc"
+#     - "go install github.com/marcus/td@latest"
+#     - "go install github.com/Fission-AI/OpenSpec@latest"
+#   post_setup:
+#     - "which td && td --version"
+#     - "echo 'Setup complete'"
 `
 }
 

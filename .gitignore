@@ -43,3 +43,5 @@ _site/
 .jekyll-cache/
 .jekyll-metadata
 Gemfile.lock
+.todos/
+.autopilot-logs/

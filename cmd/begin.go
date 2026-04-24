@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/agoodway/workie/config"
 	"github.com/agoodway/workie/manager"
 	"github.com/agoodway/workie/provider"
 	"github.com/agoodway/workie/provider/github"
@@ -12,13 +11,10 @@ import (
 	"github.com/agoodway/workie/provider/linear"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"github.com/tmc/langchaingo/llms/ollama"
 )
 
 var (
 	issueRef string // Issue reference for creating branch from issue
-	useAI    bool   // Use AI to generate branch names
 )
 
 // beginCmd represents the begin command
@@ -41,17 +37,11 @@ Branch Creation Options:
 - Provide a branch name directly: workie begin feature/my-feature
 - Auto-generate a timestamp-based name: workie begin
 - Create from an issue: workie begin --issue github:123
-- Use AI for better branch names: workie begin --issue github:123 --ai
 
 When using --issue, the command will:
 - Fetch issue details from the configured provider
 - Generate an appropriate branch name based on issue type and title
 - Display issue information before creating the worktree
-
-When using --ai with --issue:
-- Uses AI to analyze the issue and generate more descriptive branch names
-- Creates concise names that capture the essence of the work
-- Falls back to standard generation if AI is unavailable
 
 Configuration is read from .workie.yaml (or workie.yaml) and can specify:
 - Files and directories to copy to new worktrees
@@ -64,9 +54,6 @@ affecting your main working directory.`,
 	Example: `  # Begin work on a new feature
   workie begin feature/user-auth
 
-  # Begin work on an AI integration feature
-  workie begin feature/ai-integration
-
   # Begin work from a GitHub issue
   workie begin --issue github:123
 
@@ -75,9 +62,6 @@ affecting your main working directory.`,
 
   # Begin work from issue (uses default/only configured provider)
   workie begin --issue 123
-
-  # Begin work with AI-generated branch name
-  workie begin --issue github:123 --ai
 
   # Begin a hotfix with custom configuration
   workie begin hotfix/security-patch --config .workie-production.yaml
@@ -94,11 +78,6 @@ affecting your main working directory.`,
 		// Check if both branch name and issue flag are provided
 		if len(args) > 0 && issueRef != "" {
 			return fmt.Errorf("cannot specify both branch name and --issue flag")
-		}
-
-		// Check if --ai is used without --issue
-		if useAI && issueRef == "" {
-			return fmt.Errorf("--ai flag requires --issue flag")
 		}
 
 		// Get branch name from args if provided
@@ -149,7 +128,6 @@ func init() {
 
 	// Add flags
 	beginCmd.Flags().StringVarP(&issueRef, "issue", "i", "", "Create branch from issue reference (e.g., github:123, jira:PROJ-456, or just 123 if only one provider is configured)")
-	beginCmd.Flags().BoolVar(&useAI, "ai", false, "Use AI to generate more descriptive branch names (requires --issue)")
 }
 
 // getBranchNameFromIssue fetches an issue and generates a branch name from it
@@ -220,27 +198,8 @@ func getBranchNameFromIssue(wm *manager.WorktreeManager, issueRef string) (strin
 	}
 
 	// Generate branch name
-	var branchName string
-
-	if useAI {
-		// Use AI to generate branch name
-		aiName, err := generateAIBranchName(wm, p, issue)
-		if err != nil {
-			// Fall back to standard generation if AI fails
-			if verbose {
-				fmt.Printf("⚠️  AI branch name generation failed: %v\n", err)
-				fmt.Printf("   Falling back to standard generation...\n")
-			}
-			branchName = p.CreateBranchName(issue)
-		} else {
-			branchName = aiName
-			fmt.Printf("\n🤖 AI-generated branch name: %s\n", branchName)
-		}
-	} else {
-		// Use standard branch name generation
-		branchName = p.CreateBranchName(issue)
-		fmt.Printf("\n🌿 Generated branch name: %s\n", branchName)
-	}
+	branchName := p.CreateBranchName(issue)
+	fmt.Printf("\n🌿 Generated branch name: %s\n", branchName)
 
 	return branchName, nil
 }
@@ -300,88 +259,3 @@ func initializeBeginProviders(wm *manager.WorktreeManager, registry *provider.Re
 	return nil
 }
 
-// generateAIBranchName generates a branch name using AI
-func generateAIBranchName(wm *manager.WorktreeManager, p provider.Provider, issue *provider.Issue) (string, error) {
-	// Load AI configuration
-	configFile := wm.Options.ConfigFile
-	if configFile == "" {
-		configFile = ".workie.yaml"
-	}
-	viper.SetConfigFile(configFile)
-	if err := viper.ReadInConfig(); err != nil {
-		return "", fmt.Errorf("failed to read config: %w", err)
-	}
-
-	var cfg config.Config
-	if err := viper.Unmarshal(&cfg); err != nil {
-		return "", fmt.Errorf("failed to unmarshal config: %w", err)
-	}
-
-	if !cfg.AI.Enabled {
-		return "", fmt.Errorf("AI features are not enabled in configuration")
-	}
-
-	// Create Ollama client
-	ollamaOpts := []ollama.Option{
-		ollama.WithModel(cfg.AI.Model.Name),
-	}
-
-	if cfg.AI.Ollama.BaseURL != "" {
-		ollamaOpts = append(ollamaOpts, ollama.WithServerURL(cfg.AI.Ollama.BaseURL))
-	}
-
-	llm, err := ollama.New(ollamaOpts...)
-	if err != nil {
-		return "", fmt.Errorf("failed to create AI client: %w", err)
-	}
-
-	// Get the branch prefix from provider
-	prefix := ""
-	switch strings.ToLower(issue.Type) {
-	case "bug":
-		if wm.Config.Providers != nil {
-			if provConfig, ok := wm.Config.Providers[p.Name()].(map[string]interface{}); ok {
-				if branchPrefix, ok := provConfig["branch_prefix"].(map[string]interface{}); ok {
-					if bugPrefix, ok := branchPrefix["bug"].(string); ok {
-						prefix = bugPrefix
-					}
-				}
-			}
-		}
-		if prefix == "" {
-			prefix = "fix/"
-		}
-	case "feature", "enhancement", "story":
-		if wm.Config.Providers != nil {
-			if provConfig, ok := wm.Config.Providers[p.Name()].(map[string]interface{}); ok {
-				if branchPrefix, ok := provConfig["branch_prefix"].(map[string]interface{}); ok {
-					if featPrefix, ok := branchPrefix["feature"].(string); ok {
-						prefix = featPrefix
-					}
-				}
-			}
-		}
-		if prefix == "" {
-			prefix = "feat/"
-		}
-	default:
-		if wm.Config.Providers != nil {
-			if provConfig, ok := wm.Config.Providers[p.Name()].(map[string]interface{}); ok {
-				if branchPrefix, ok := provConfig["branch_prefix"].(map[string]interface{}); ok {
-					if defaultPrefix, ok := branchPrefix["default"].(string); ok {
-						prefix = defaultPrefix
-					}
-				}
-			}
-		}
-		if prefix == "" {
-			prefix = "issue/"
-		}
-	}
-
-	// Create AI branch name generator
-	generator := provider.NewAIBranchNameGenerator(llm)
-
-	// Generate the branch name
-	return generator.GenerateBranchName(issue, prefix)
-}

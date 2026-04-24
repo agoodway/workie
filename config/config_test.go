@@ -3,7 +3,6 @@ package config
 import (
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 )
 
@@ -86,6 +85,57 @@ func TestLoadConfig(t *testing.T) {
 		}
 	})
 
+	t.Run("autopilot defaults", func(t *testing.T) {
+		configContent := `autopilot:
+  backend: opencode
+  models:
+    claude: opus
+    codex: gpt-5-codex
+    opencode: openai/gpt-5.5
+  opencode:
+    server_url: http://127.0.0.1:4096
+    username_env: CUSTOM_OPENCODE_USER
+    password_env: CUSTOM_OPENCODE_PASS`
+
+		configPath := filepath.Join(tempDir, ".workie.yaml")
+		err := os.WriteFile(configPath, []byte(configContent), 0644)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		config, err := LoadConfig(tempDir, "")
+		if err != nil {
+			t.Fatalf("Expected no error, got: %v", err)
+		}
+		if config.Autopilot == nil {
+			t.Fatal("Expected autopilot config to be set")
+		}
+		if config.Autopilot.Backend != "opencode" {
+			t.Fatalf("Expected backend opencode, got %q", config.Autopilot.Backend)
+		}
+		if config.Autopilot.Models["claude"] != "opus" {
+			t.Fatalf("Expected claude model opus, got %q", config.Autopilot.Models["claude"])
+		}
+		if config.Autopilot.Models["codex"] != "gpt-5-codex" {
+			t.Fatalf("Expected codex model gpt-5-codex, got %q", config.Autopilot.Models["codex"])
+		}
+		if config.Autopilot.Models["opencode"] != "openai/gpt-5.5" {
+			t.Fatalf("Expected opencode model openai/gpt-5.5, got %q", config.Autopilot.Models["opencode"])
+		}
+		if config.Autopilot.Opencode == nil {
+			t.Fatal("Expected opencode config to be set")
+		}
+		if config.Autopilot.Opencode.ServerURL != "http://127.0.0.1:4096" {
+			t.Fatalf("Expected server URL to be loaded, got %q", config.Autopilot.Opencode.ServerURL)
+		}
+		if config.Autopilot.Opencode.UsernameEnv != "CUSTOM_OPENCODE_USER" {
+			t.Fatalf("Expected username env to be loaded, got %q", config.Autopilot.Opencode.UsernameEnv)
+		}
+		if config.Autopilot.Opencode.PasswordEnv != "CUSTOM_OPENCODE_PASS" {
+			t.Fatalf("Expected password env to be loaded, got %q", config.Autopilot.Opencode.PasswordEnv)
+		}
+	})
+
 	t.Run("invalid YAML", func(t *testing.T) {
 		configContent := `files_to_copy:
   - .env.example
@@ -116,6 +166,85 @@ func TestHasFilesToCopy(t *testing.T) {
 		config := &Config{FilesToCopy: []string{".env.example"}}
 		if !config.HasFilesToCopy() {
 			t.Error("Expected HasFilesToCopy to return true for config with files")
+		}
+	})
+}
+
+func TestSpriteConfig(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "workie-sprite-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	t.Run("valid sprite config", func(t *testing.T) {
+		configContent := `files_to_copy:
+  - .env.example
+sprite:
+  name: "my-dev-vm"
+  org: "my-org"
+  pre_setup:
+    - "mkdir -p ~/go/bin"
+    - "echo 'export PATH=$PATH:~/go/bin' >> ~/.bashrc"
+  post_setup:
+    - "which td && td --version"
+    - "echo 'Setup complete'"`
+
+		configPath := filepath.Join(tempDir, ".workie.yaml")
+		err := os.WriteFile(configPath, []byte(configContent), 0644)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		config, err := LoadConfig(tempDir, "")
+		if err != nil {
+			t.Fatalf("Expected no error, got: %v", err)
+		}
+		if config.Sprite == nil {
+			t.Fatal("Expected sprite config to be set")
+		}
+		if config.Sprite.Name != "my-dev-vm" {
+			t.Errorf("Expected sprite name 'my-dev-vm', got '%s'", config.Sprite.Name)
+		}
+		if config.Sprite.Org != "my-org" {
+			t.Errorf("Expected sprite org 'my-org', got '%s'", config.Sprite.Org)
+		}
+		if len(config.Sprite.PreSetup) != 2 {
+			t.Fatalf("Expected 2 pre_setup commands, got %d", len(config.Sprite.PreSetup))
+		}
+		if config.Sprite.PreSetup[0] != "mkdir -p ~/go/bin" {
+			t.Errorf("Expected first pre_setup command 'mkdir -p ~/go/bin', got '%s'", config.Sprite.PreSetup[0])
+		}
+		if config.Sprite.PreSetup[1] != "echo 'export PATH=$PATH:~/go/bin' >> ~/.bashrc" {
+			t.Errorf("Expected second pre_setup command, got '%s'", config.Sprite.PreSetup[1])
+		}
+		if len(config.Sprite.PostSetup) != 2 {
+			t.Fatalf("Expected 2 post_setup commands, got %d", len(config.Sprite.PostSetup))
+		}
+		if config.Sprite.PostSetup[0] != "which td && td --version" {
+			t.Errorf("Expected first post_setup command, got '%s'", config.Sprite.PostSetup[0])
+		}
+		if config.Sprite.PostSetup[1] != "echo 'Setup complete'" {
+			t.Errorf("Expected second post_setup command, got '%s'", config.Sprite.PostSetup[1])
+		}
+	})
+
+	t.Run("missing sprite section", func(t *testing.T) {
+		configContent := `files_to_copy:
+  - .env.example`
+
+		configPath := filepath.Join(tempDir, ".workie.yaml")
+		err := os.WriteFile(configPath, []byte(configContent), 0644)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		config, err := LoadConfig(tempDir, "")
+		if err != nil {
+			t.Fatalf("Expected no error, got: %v", err)
+		}
+		if config.Sprite != nil {
+			t.Error("Expected sprite config to be nil when not configured")
 		}
 	})
 }
@@ -151,177 +280,14 @@ hooks:
 		if config == nil {
 			t.Fatal("Expected config to be returned, got nil")
 		}
-	})
-
-	t.Run("empty hook command", func(t *testing.T) {
-		configContent := `files_to_copy:
-  - .env.example
-hooks:
-  post_create:
-    - "echo 'valid command'"
-    - ""
-    - "npm install"`
-
-		configPath := filepath.Join(tempDir, ".workie.yaml")
-		err := os.WriteFile(configPath, []byte(configContent), 0644)
-		if err != nil {
-			t.Fatal(err)
+		if config.Hooks == nil {
+			t.Fatal("Expected hooks to be set")
 		}
-
-		_, err = LoadConfig(tempDir, "")
-		if err == nil {
-			t.Error("Expected error for empty hook command, got none")
+		if len(config.Hooks.PostCreate) != 2 {
+			t.Errorf("Expected 2 post_create hooks, got %d", len(config.Hooks.PostCreate))
 		}
-		if !strings.Contains(err.Error(), "empty command") {
-			t.Errorf("Expected error to mention empty command, got: %v", err)
-		}
-	})
-
-	t.Run("dangerous command - rm -rf", func(t *testing.T) {
-		configContent := `hooks:
-  post_create:
-    - "rm -rf /"`
-
-		configPath := filepath.Join(tempDir, ".workie.yaml")
-		err := os.WriteFile(configPath, []byte(configContent), 0644)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		_, err = LoadConfig(tempDir, "")
-		if err == nil {
-			t.Error("Expected error for dangerous rm -rf command, got none")
-		}
-		if !strings.Contains(err.Error(), "potentially dangerous command") {
-			t.Errorf("Expected error to mention dangerous command, got: %v", err)
-		}
-	})
-
-	t.Run("suspicious network command", func(t *testing.T) {
-		configContent := `hooks:
-  post_create:
-    - "python -m http.server 8080"`
-
-		configPath := filepath.Join(tempDir, ".workie.yaml")
-		err := os.WriteFile(configPath, []byte(configContent), 0644)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		_, err = LoadConfig(tempDir, "")
-		if err == nil {
-			t.Error("Expected error for network command, got none")
-		}
-		if !strings.Contains(err.Error(), "potentially risky network command") {
-			t.Errorf("Expected error to mention risky network command, got: %v", err)
-		}
-	})
-
-	t.Run("unbalanced quotes", func(t *testing.T) {
-		configContent := `hooks:
-  post_create:
-    - "echo 'hello world"`
-
-		configPath := filepath.Join(tempDir, ".workie.yaml")
-		err := os.WriteFile(configPath, []byte(configContent), 0644)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		_, err = LoadConfig(tempDir, "")
-		if err == nil {
-			t.Error("Expected error for unbalanced quotes, got none")
-		}
-		if !strings.Contains(err.Error(), "unbalanced") {
-			t.Errorf("Expected error to mention unbalanced quotes, got: %v", err)
-		}
-	})
-
-	t.Run("excessive number of hooks", func(t *testing.T) {
-		configContent := `hooks:
-  post_create:
-`
-		// Add many hook commands to exceed the limit
-		for i := 0; i < 25; i++ {
-			configContent += "    - \"echo command " + string(rune('0'+i%10)) + "\"\n"
-		}
-
-		configPath := filepath.Join(tempDir, ".workie.yaml")
-		err := os.WriteFile(configPath, []byte(configContent), 0644)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		_, err = LoadConfig(tempDir, "")
-		if err == nil {
-			t.Error("Expected error for too many hooks, got none")
-		}
-		if !strings.Contains(err.Error(), "might impact performance") {
-			t.Errorf("Expected error to mention performance impact, got: %v", err)
-		}
-	})
-
-	t.Run("duplicate commands", func(t *testing.T) {
-		configContent := `hooks:
-  post_create:
-    - "npm install"
-    - "npm test"
-    - "npm install"
-`
-
-		configPath := filepath.Join(tempDir, ".workie.yaml")
-		err := os.WriteFile(configPath, []byte(configContent), 0644)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		_, err = LoadConfig(tempDir, "")
-		if err == nil {
-			t.Error("Expected error for duplicate commands, got none")
-		}
-		if !strings.Contains(err.Error(), "duplicate command") {
-			t.Errorf("Expected error to mention duplicate command, got: %v", err)
-		}
-	})
-
-	t.Run("privilege escalation", func(t *testing.T) {
-		configContent := `hooks:
-  pre_remove:
-    - "sudo bash"`
-
-		configPath := filepath.Join(tempDir, ".workie.yaml")
-		err := os.WriteFile(configPath, []byte(configContent), 0644)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		_, err = LoadConfig(tempDir, "")
-		if err == nil {
-			t.Error("Expected error for privilege escalation, got none")
-		}
-		if !strings.Contains(err.Error(), "privilege escalation") {
-			t.Errorf("Expected error to mention privilege escalation, got: %v", err)
-		}
-	})
-
-	t.Run("command with whitespace prefix", func(t *testing.T) {
-		configContent := `hooks:
-  post_create:
-    - " echo hello"
-`
-
-		configPath := filepath.Join(tempDir, ".workie.yaml")
-		err := os.WriteFile(configPath, []byte(configContent), 0644)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		_, err = LoadConfig(tempDir, "")
-		if err == nil {
-			t.Error("Expected error for command starting with whitespace, got none")
-		}
-		if !strings.Contains(err.Error(), "starts with whitespace") {
-			t.Errorf("Expected error to mention whitespace prefix, got: %v", err)
+		if len(config.Hooks.PreRemove) != 1 {
+			t.Errorf("Expected 1 pre_remove hook, got %d", len(config.Hooks.PreRemove))
 		}
 	})
 }

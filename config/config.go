@@ -10,88 +10,43 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// AIDecisionConfig represents AI-powered hook decision configuration
-type AIDecisionConfig struct {
-	Enabled    bool   `yaml:"enabled" mapstructure:"enabled"`                   // Enable AI decision making
-	Model      string `yaml:"model,omitempty" mapstructure:"model"`             // Override model (uses default if empty)
-	StrictMode bool   `yaml:"strict_mode,omitempty" mapstructure:"strict_mode"` // If true, any hook failure = block
-}
-
-// SystemNotificationConfig represents system notification settings
-type SystemNotificationConfig struct {
-	Enabled bool   `yaml:"enabled" mapstructure:"enabled"`       // Enable system notifications
-	Title   string `yaml:"title,omitempty" mapstructure:"title"` // Notification title (default: "Workie - Claude Code")
-	Icon    string `yaml:"icon,omitempty" mapstructure:"icon"`   // Path to notification icon
-}
-
-// WatchConfig represents configuration for the watch command
-type WatchConfig struct {
-	Enabled           bool     `yaml:"enabled" mapstructure:"enabled"`                                 // Enable watch functionality
-	IntervalMinutes   int      `yaml:"interval_minutes,omitempty" mapstructure:"interval_minutes"`     // Check interval in minutes (default: 5)
-	NotifyOnConflicts bool     `yaml:"notify_on_conflicts" mapstructure:"notify_on_conflicts"`         // Send notifications for conflicts
-	BranchesToIgnore  []string `yaml:"branches_to_ignore,omitempty" mapstructure:"branches_to_ignore"` // Glob patterns for branches to ignore
-	Port              int      `yaml:"port,omitempty" mapstructure:"port"`                             // HTTP server port (default: 8080)
-}
-
 // Hooks represents the configuration for lifecycle hooks
 type Hooks struct {
 	PostCreate     []string `yaml:"post_create" mapstructure:"post_create"`
 	PreRemove      []string `yaml:"pre_remove" mapstructure:"pre_remove"`
 	TimeoutMinutes int      `yaml:"timeout_minutes,omitempty" mapstructure:"timeout_minutes"` // Hook execution timeout in minutes (default: 5)
-
-	// Claude Code hook events
-	ClaudePreToolUse       []string `yaml:"claude_pre_tool_use,omitempty" mapstructure:"claude_pre_tool_use"`             // Before Claude uses a tool
-	ClaudePostToolUse      []string `yaml:"claude_post_tool_use,omitempty" mapstructure:"claude_post_tool_use"`           // After Claude uses a tool
-	ClaudeNotification     []string `yaml:"claude_notification,omitempty" mapstructure:"claude_notification"`             // On Claude notifications
-	ClaudeUserPromptSubmit []string `yaml:"claude_user_prompt_submit,omitempty" mapstructure:"claude_user_prompt_submit"` // When user submits prompt
-	ClaudeStop             []string `yaml:"claude_stop,omitempty" mapstructure:"claude_stop"`                             // When Claude finishes responding
-	ClaudeSubagentStop     []string `yaml:"claude_subagent_stop,omitempty" mapstructure:"claude_subagent_stop"`           // When subagent finishes
-	ClaudePreCompact       []string `yaml:"claude_pre_compact,omitempty" mapstructure:"claude_pre_compact"`               // Before context compaction
-
-	// AI decision configuration
-	AIDecision *AIDecisionConfig `yaml:"ai_decision,omitempty" mapstructure:"ai_decision"`
-
-	// System notification configuration
-	SystemNotifications *SystemNotificationConfig `yaml:"system_notifications,omitempty" mapstructure:"system_notifications"`
 }
 
-// AIModel represents AI model configuration
-type AIModel struct {
-	Provider      string  `yaml:"provider" mapstructure:"provider"`
-	Name          string  `yaml:"name" mapstructure:"name"`
-	Version       string  `yaml:"version" mapstructure:"version"`
-	Temperature   float64 `yaml:"temperature" mapstructure:"temperature"`
-	MaxTokens     int     `yaml:"max_tokens" mapstructure:"max_tokens"`
-	ContextLength int     `yaml:"context_length" mapstructure:"context_length"`
-	TopP          float64 `yaml:"top_p" mapstructure:"top_p"`
-	Timeout       int     `yaml:"timeout" mapstructure:"timeout"`
-}
-
-// OllamaConfig represents Ollama-specific configuration
-type OllamaConfig struct {
-	BaseURL   string            `yaml:"base_url" mapstructure:"base_url"`
-	Endpoints map[string]string `yaml:"endpoints" mapstructure:"endpoints"`
-	KeepAlive string            `yaml:"keep_alive" mapstructure:"keep_alive"`
-	NumThread int               `yaml:"num_thread" mapstructure:"num_thread"`
-	NumGPU    int               `yaml:"num_gpu" mapstructure:"num_gpu"`
-}
-
-// AIConfig represents AI configuration
-type AIConfig struct {
-	Enabled bool         `yaml:"enabled" mapstructure:"enabled"`
-	Model   AIModel      `yaml:"model" mapstructure:"model"`
-	Ollama  OllamaConfig `yaml:"ollama" mapstructure:"ollama"`
+// SpriteConfig represents configuration for a sprite VM
+type SpriteConfig struct {
+	Name      string   `yaml:"name" mapstructure:"name"`
+	Org       string   `yaml:"org,omitempty" mapstructure:"org"`
+	PreSetup  []string `yaml:"pre_setup,omitempty" mapstructure:"pre_setup"`
+	PostSetup []string `yaml:"post_setup,omitempty" mapstructure:"post_setup"`
 }
 
 // Config represents the YAML configuration structure
 type Config struct {
 	FilesToCopy     []string               `yaml:"files_to_copy" mapstructure:"files_to_copy"`
 	Hooks           *Hooks                 `yaml:"hooks,omitempty" mapstructure:"hooks"`
-	AI              AIConfig               `yaml:"ai" mapstructure:"ai"`
+	Sprite          *SpriteConfig          `yaml:"sprite,omitempty" mapstructure:"sprite"`
+	Autopilot       *AutopilotConfig       `yaml:"autopilot,omitempty" mapstructure:"autopilot"`
 	Providers       map[string]interface{} `yaml:"providers,omitempty" mapstructure:"providers"`               // Provider configurations
 	DefaultProvider string                 `yaml:"default_provider,omitempty" mapstructure:"default_provider"` // Default issue provider
-	Watch           *WatchConfig           `yaml:"watch,omitempty" mapstructure:"watch"`                       // Watch configuration
 	LoadedFrom      string                 `yaml:"-" mapstructure:"-"`                                         // Path to the loaded config file (not serialized)
+}
+
+// AutopilotConfig represents defaults for autopilot runs.
+type AutopilotConfig struct {
+	Backend  string                   `yaml:"backend,omitempty" mapstructure:"backend"`
+	Models   map[string]string        `yaml:"models,omitempty" mapstructure:"models"`
+	Opencode *AutopilotOpencodeConfig `yaml:"opencode,omitempty" mapstructure:"opencode"`
+}
+
+type AutopilotOpencodeConfig struct {
+	ServerURL   string `yaml:"server_url,omitempty" mapstructure:"server_url"`
+	UsernameEnv string `yaml:"username_env,omitempty" mapstructure:"username_env"`
+	PasswordEnv string `yaml:"password_env,omitempty" mapstructure:"password_env"`
 }
 
 // LoadConfig attempts to load configuration from the specified file path,
@@ -118,12 +73,22 @@ func LoadConfig(repoPath, customPath string) (*Config, error) {
 			return nil, fmt.Errorf("custom config file not found: %s", configPath)
 		}
 	} else {
-		// Try default config file names in the repository root
+		// Try default config file names in the repository root and current directory
 		configNames := []string{".workie.yaml", "workie.yaml"}
-		for _, name := range configNames {
-			path := filepath.Join(repoPath, name)
-			if _, err := os.Stat(path); err == nil {
-				configPath = path
+		cwd, _ := os.Getwd()
+		searchPaths := []string{repoPath}
+		if cwd != "" && cwd != repoPath {
+			searchPaths = append(searchPaths, cwd)
+		}
+		for _, dir := range searchPaths {
+			for _, name := range configNames {
+				path := filepath.Join(dir, name)
+				if _, err := os.Stat(path); err == nil {
+					configPath = path
+					break
+				}
+			}
+			if configPath != "" {
 				break
 			}
 		}
@@ -161,19 +126,6 @@ func (c *Config) HasFilesToCopy() bool {
 func LoadConfigWithViper(repoRoot string, customConfigPath string) (*Config, error) {
 	// Create a new Viper instance
 	v := viper.New()
-
-	// Set defaults
-	v.SetDefault("ai.model.provider", "ollama")
-	v.SetDefault("ai.model.name", "llama3.2")
-	v.SetDefault("ai.model.temperature", 0.7)
-	v.SetDefault("ai.model.max_tokens", 2048)
-	v.SetDefault("ai.model.context_length", 4096)
-	v.SetDefault("ai.model.top_p", 0.9)
-	v.SetDefault("ai.model.timeout", 60)
-	v.SetDefault("ai.ollama.base_url", "http://localhost:11434")
-	v.SetDefault("ai.ollama.keep_alive", "5m")
-	v.SetDefault("ai.ollama.num_thread", 4)
-	v.SetDefault("ai.ollama.num_gpu", 0)
 
 	// Environment variable support
 	v.SetEnvPrefix("WORKIE")
@@ -241,34 +193,6 @@ func LoadConfigWithViper(repoRoot string, customConfigPath string) (*Config, err
 	config.LoadedFrom = v.ConfigFileUsed()
 
 	return config, nil
-}
-
-// IsAIEnabled returns true if AI features are enabled
-func (c *Config) IsAIEnabled() bool {
-	return c != nil && c.AI.Model.Provider != "" && c.AI.Model.Name != ""
-}
-
-// GetOllamaEndpoint returns the full Ollama API endpoint for a given operation
-func (c *Config) GetOllamaEndpoint(operation string) string {
-	if c.AI.Ollama.Endpoints != nil {
-		if endpoint, ok := c.AI.Ollama.Endpoints[operation]; ok {
-			return fmt.Sprintf("%s%s", c.AI.Ollama.BaseURL, endpoint)
-		}
-	}
-
-	// Default endpoints
-	defaults := map[string]string{
-		"chat":     "/api/chat",
-		"generate": "/api/generate",
-		"tags":     "/api/tags",
-		"pull":     "/api/pull",
-	}
-
-	if endpoint, ok := defaults[operation]; ok {
-		return fmt.Sprintf("%s%s", c.AI.Ollama.BaseURL, endpoint)
-	}
-
-	return c.AI.Ollama.BaseURL
 }
 
 // Providers represents the issue provider configurations
