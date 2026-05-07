@@ -5,7 +5,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/agoodway/workie)](https://goreportcard.com/report/github.com/agoodway/workie)
 [![GitHub release](https://img.shields.io/github/release/agoodway/workie.svg)](https://github.com/agoodway/workie/releases/latest)
 
-A developer CLI for Git worktree management, issue-driven branching, and AI-powered autopilot workflows.
+A developer CLI for Git worktree management and AI-powered autopilot workflows.
 
 ## Install
 
@@ -31,8 +31,6 @@ Create a new worktree for isolated development.
 
 ```bash
 workie begin feature/new-ui
-workie begin --issue 123              # branch name from issue
-workie begin --issue github:456       # explicit provider
 ```
 
 Creates a worktree under `<repo>-worktrees/<branch>/`, copies configured files, and runs `post_create` hooks.
@@ -129,44 +127,6 @@ hooks:
   pre_remove:
     - "npm run cleanup"
   timeout_minutes: 5
-
-# Default issue provider
-default_provider: github
-
-# Issue providers
-providers:
-  github:
-    enabled: true
-    settings:
-      token_env: "GITHUB_TOKEN"
-      owner: "your-org"
-      repo: "your-repo"
-    branch_prefix:
-      bug: "fix/"
-      feature: "feat/"
-      default: "issue/"
-
-  jira:
-    enabled: true
-    settings:
-      base_url: "https://your-company.atlassian.net"
-      email_env: "JIRA_EMAIL"
-      api_token_env: "JIRA_TOKEN"
-      project: "PROJ"
-    branch_prefix:
-      bug: "bugfix/"
-      story: "feature/"
-      default: "jira/"
-
-  linear:
-    enabled: true
-    settings:
-      api_key_env: "LINEAR_API_KEY"
-      team_id: "TEAM"
-    branch_prefix:
-      bug: "fix/"
-      feature: "feat/"
-      default: "issue/"
 
 # Sprite VM setup
 sprite:

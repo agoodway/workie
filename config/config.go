@@ -30,10 +30,8 @@ type Config struct {
 	FilesToCopy     []string               `yaml:"files_to_copy" mapstructure:"files_to_copy"`
 	Hooks           *Hooks                 `yaml:"hooks,omitempty" mapstructure:"hooks"`
 	Sprite          *SpriteConfig          `yaml:"sprite,omitempty" mapstructure:"sprite"`
-	Autopilot       *AutopilotConfig       `yaml:"autopilot,omitempty" mapstructure:"autopilot"`
-	Providers       map[string]interface{} `yaml:"providers,omitempty" mapstructure:"providers"`               // Provider configurations
-	DefaultProvider string                 `yaml:"default_provider,omitempty" mapstructure:"default_provider"` // Default issue provider
-	LoadedFrom      string                 `yaml:"-" mapstructure:"-"`                                         // Path to the loaded config file (not serialized)
+	Autopilot  *AutopilotConfig `yaml:"autopilot,omitempty" mapstructure:"autopilot"`
+	LoadedFrom string           `yaml:"-" mapstructure:"-"` // Path to the loaded config file (not serialized)
 }
 
 // AutopilotConfig represents defaults for autopilot runs.
@@ -195,51 +193,3 @@ func LoadConfigWithViper(repoRoot string, customConfigPath string) (*Config, err
 	return config, nil
 }
 
-// Providers represents the issue provider configurations
-type Providers struct {
-	GitHub *GitHubProvider `yaml:"github,omitempty" mapstructure:"github"`
-	Jira   *JiraProvider   `yaml:"jira,omitempty" mapstructure:"jira"`
-	Linear *LinearProvider `yaml:"linear,omitempty" mapstructure:"linear"`
-}
-
-// GitHubProvider represents GitHub configuration
-type GitHubProvider struct {
-	Enabled      bool              `yaml:"enabled" mapstructure:"enabled"`
-	Settings     GitHubSettings    `yaml:"settings" mapstructure:"settings"`
-	BranchPrefix map[string]string `yaml:"branch_prefix,omitempty" mapstructure:"branch_prefix"`
-}
-
-// GitHubSettings contains GitHub-specific settings
-type GitHubSettings struct {
-	TokenEnv string `yaml:"token_env" mapstructure:"token_env"`
-	Owner    string `yaml:"owner" mapstructure:"owner"`
-	Repo     string `yaml:"repo" mapstructure:"repo"`
-}
-
-// JiraProvider represents Jira configuration
-type JiraProvider struct {
-	Enabled      bool              `yaml:"enabled" mapstructure:"enabled"`
-	Settings     JiraSettings      `yaml:"settings" mapstructure:"settings"`
-	BranchPrefix map[string]string `yaml:"branch_prefix,omitempty" mapstructure:"branch_prefix"`
-}
-
-// JiraSettings contains Jira-specific settings
-type JiraSettings struct {
-	BaseURL     string `yaml:"base_url" mapstructure:"base_url"`
-	EmailEnv    string `yaml:"email_env" mapstructure:"email_env"`
-	APITokenEnv string `yaml:"api_token_env" mapstructure:"api_token_env"`
-	Project     string `yaml:"project" mapstructure:"project"`
-}
-
-// LinearProvider represents Linear configuration
-type LinearProvider struct {
-	Enabled      bool              `yaml:"enabled" mapstructure:"enabled"`
-	Settings     LinearSettings    `yaml:"settings" mapstructure:"settings"`
-	BranchPrefix map[string]string `yaml:"branch_prefix,omitempty" mapstructure:"branch_prefix"`
-}
-
-// LinearSettings contains Linear-specific settings
-type LinearSettings struct {
-	APIKeyEnv string `yaml:"api_key_env" mapstructure:"api_key_env"`
-	TeamID    string `yaml:"team_id,omitempty" mapstructure:"team_id"`
-}
