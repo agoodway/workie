@@ -55,17 +55,32 @@ workie
 # Initialize configuration file (recommended first step)
 workie init
 
-# Create a new worktree with branch
-workie feature/new-feature
+# Begin work on a new branch (creates a worktree, copies files, runs post_create hooks)
+workie begin feature/new-feature
 
 # List all worktrees
 workie --list
 
-# Remove a worktree when finished
-workie remove feature/completed-feature
+# Finish a worktree when done (runs pre_remove hooks, then git worktree remove)
+workie finish feature/completed-feature
 
-# Remove worktree and delete the branch
-workie remove feature/old-work --prune-branch
+# Finish and delete the branch
+workie finish feature/old-work --prune-branch
+
+# Set up an existing worktree: copy files_to_copy and run post_create. Does not git worktree add.
+workie setup feature/foo --source-tree-path /repo --worktree-path /path/to/worktree
+
+# Clean up an existing worktree: pre_remove hooks + dirty check. Does not git worktree remove.
+workie cleanup feature/foo --source-tree-path /repo --worktree-path /path/to/worktree
+workie cleanup feature/foo --source-tree-path /repo --worktree-path /path/to/worktree --force  # skip dirty check only
+
+# Codex env fallbacks (flags override these)
+# CODEX_SOURCE_TREE_PATH, CODEX_WORKTREE_PATH
+workie setup
+workie cleanup
+
+# setup-sprite is a different command: it configures sprite.dev VMs, not git worktrees
+workie setup-sprite
 ```
 
 ## Testing the Installation

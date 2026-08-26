@@ -65,6 +65,20 @@ Configuration example:
   workie finish feature/completed-feature
   workie finish feature/old-work --prune-branch --force
 
+  # Set up an existing worktree (e.g. Codex-managed; does not create one)
+  workie setup feature/foo --source-tree-path /repo --worktree-path /path/to/worktree
+
+  # Clean up an existing worktree without removing it
+  workie cleanup feature/foo --source-tree-path /repo --worktree-path /path/to/worktree
+  workie cleanup feature/foo --source-tree-path /repo --worktree-path /path/to/worktree --force
+
+  # Codex env fallbacks: CODEX_SOURCE_TREE_PATH and CODEX_WORKTREE_PATH
+  workie setup
+  workie cleanup
+
+  # setup-sprite is a different command (sprite.dev VMs, not git worktrees)
+  workie setup-sprite
+
   # Use custom configuration for specific workflows
   workie begin feature/deployment --config .workie-production.yaml
 

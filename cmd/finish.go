@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -79,40 +80,16 @@ clean up your development environment.`,
 }
 
 func finishWorktree(wm *manager.WorktreeManager, branchName string) error {
-	// Validate branch name
-	if strings.TrimSpace(branchName) == "" {
-		return fmt.Errorf("branch name cannot be empty")
-	}
-
-	// Construct expected worktree path
 	worktreePath := filepath.Join(wm.WorktreesDir, branchName)
 
-	// Check if worktree path exists
-	if _, err := os.Stat(worktreePath); os.IsNotExist(err) {
-		return fmt.Errorf("worktree not found: %s\n\nTo fix this:\n  • Check the branch name is correct\n  • Use 'workie --list' to see available worktrees\n  • Verify the worktree hasn't already been removed", worktreePath)
-	}
-
-	// Execute pre_remove hooks if configured
-	if wm.Config.Hooks != nil && len(wm.Config.Hooks.PreRemove) > 0 {
-		if !wm.Options.Quiet {
-			fmt.Printf("🪝 Running pre_remove hooks before removal...\n")
+	if err := prepareWorktreeCleanup(wm, branchName, worktreePath, forceFinish,
+		"🪝 Running pre_remove hooks before removal...",
+		"⚠️  Warning: Some pre_remove hooks failed, but worktree removal will continue"); err != nil {
+		var statusErr *worktreeStatusError
+		if errors.As(err, &statusErr) {
+			return fmt.Errorf("worktree removal blocked: %w\n\nTo fix this:\n  • Commit or stash your changes\n  • Use --force to remove anyway (will lose uncommitted changes)", err)
 		}
-		if err := wm.ExecuteHooks(wm.Config.Hooks.PreRemove, worktreePath, "pre_remove"); err != nil {
-			// Don't fail the entire operation for hook errors, just warn
-			fmt.Printf("⚠️  Warning: Some pre_remove hooks failed, but worktree removal will continue\n")
-			if wm.Options.Verbose {
-				fmt.Printf("Hook execution details: %v\n", err)
-			}
-		}
-	} else {
-		if wm.Options.Verbose {
-			fmt.Printf("🪝 No pre_remove hooks configured\n")
-		}
-	}
-
-	// Check if worktree is currently active/checked out
-	if err := checkWorktreeStatus(wm, worktreePath); err != nil && !forceFinish {
-		return fmt.Errorf("worktree removal blocked: %w\n\nTo fix this:\n  • Commit or stash your changes\n  • Use --force to remove anyway (will lose uncommitted changes)", err)
+		return err
 	}
 
 	if !wm.Options.Quiet {
@@ -153,7 +130,66 @@ func finishWorktree(wm *manager.WorktreeManager, branchName string) error {
 	return nil
 }
 
-func checkWorktreeStatus(wm *manager.WorktreeManager, worktreePath string) error {
+// worktreeStatusError is a dirty-worktree or status-check failure from
+// prepareWorktreeCleanup. Callers wrap it with operation-specific messages.
+type worktreeStatusError struct {
+	err error
+}
+
+func (e *worktreeStatusError) Error() string {
+	if e == nil || e.err == nil {
+		return ""
+	}
+	return e.err.Error()
+}
+
+func (e *worktreeStatusError) Unwrap() error {
+	if e == nil {
+		return nil
+	}
+	return e.err
+}
+
+// prepareWorktreeCleanup runs finish's pre-remove preflight: non-empty branch
+// name, path existence, pre_remove hooks (warn and continue), and dirty-worktree
+// check gated by force. It does not match HEAD, check worktree membership, or
+// resolve Codex paths. hookRunningMsg and hookContinueMsg are caller-specific
+// so finish can keep removal wording and cleanup can print non-removal text.
+func prepareWorktreeCleanup(wm *manager.WorktreeManager, branchName, worktreePath string, force bool, hookRunningMsg, hookContinueMsg string) error {
+	if strings.TrimSpace(branchName) == "" {
+		return fmt.Errorf("branch name cannot be empty")
+	}
+
+	if _, err := os.Stat(worktreePath); os.IsNotExist(err) {
+		return fmt.Errorf("worktree not found: %s\n\nTo fix this:\n  • Check the branch name is correct\n  • Use 'workie --list' to see available worktrees\n  • Verify the worktree hasn't already been removed", worktreePath)
+	}
+
+	if wm.HasPreRemoveHooks() {
+		if !wm.Options.Quiet && hookRunningMsg != "" {
+			fmt.Println(hookRunningMsg)
+		}
+		if err := wm.ExecuteHooks(wm.Config.Hooks.PreRemove, worktreePath, "pre_remove"); err != nil {
+			if hookContinueMsg != "" {
+				fmt.Println(hookContinueMsg)
+			}
+			if wm.Options.Verbose {
+				fmt.Printf("Hook execution details: %v\n", err)
+			}
+		}
+	} else {
+		if wm.Options.Verbose {
+			fmt.Printf("🪝 No pre_remove hooks configured\n")
+		}
+	}
+
+	if err := checkWorktreeStatus(worktreePath); err != nil && !force {
+		return &worktreeStatusError{err: err}
+	}
+
+	return nil
+}
+
+func checkWorktreeStatus(worktreePath string) error {
 	// Check if there are uncommitted changes
 	cmd := exec.Command("git", "status", "--porcelain")
 	cmd.Dir = worktreePath

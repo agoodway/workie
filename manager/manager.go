@@ -30,6 +30,15 @@ type WorktreeManager struct {
 	Options      Options
 }
 
+// WorktreeResult describes a created or reused git worktree.
+type WorktreeResult struct {
+	SourceDir string
+	Path      string
+	Branch    string
+	Created   bool
+	Reused    bool
+}
+
 // New creates a new WorktreeManager instance with default options
 func New() *WorktreeManager {
 	return &WorktreeManager{}
@@ -44,12 +53,20 @@ func NewWithOptions(opts Options) *WorktreeManager {
 
 // DetectGitRepository detects the current git repository and sets up paths
 func (wm *WorktreeManager) DetectGitRepository() error {
+	return wm.DetectGitRepositoryAt("")
+}
+
+// DetectGitRepositoryAt detects the git repository for dir and sets up paths.
+func (wm *WorktreeManager) DetectGitRepositoryAt(dir string) error {
 	// First check if git is available
 	if _, err := exec.LookPath("git"); err != nil {
 		return fmt.Errorf("git command not found: Please install git and ensure it's in your PATH")
 	}
 
 	cmd := exec.Command("git", "rev-parse", "--show-toplevel")
+	if strings.TrimSpace(dir) != "" {
+		cmd.Dir = dir
+	}
 	output, err := cmd.Output()
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
@@ -134,6 +151,26 @@ func (wm *WorktreeManager) LoadConfig() error {
 		}
 	}
 
+	return nil
+}
+
+// LoadConfigFromRepo loads config from Options.ConfigFile or the source
+// repository only. It does not search the process current directory.
+func (wm *WorktreeManager) LoadConfigFromRepo() error {
+	if wm.Options.ConfigFile != "" {
+		return wm.LoadConfig()
+	}
+	for _, name := range []string{".workie.yaml", "workie.yaml"} {
+		path := filepath.Join(wm.RepoPath, name)
+		if _, err := os.Stat(path); err == nil {
+			prev := wm.Options.ConfigFile
+			wm.Options.ConfigFile = path
+			err := wm.LoadConfig()
+			wm.Options.ConfigFile = prev
+			return err
+		}
+	}
+	wm.Config = &config.Config{}
 	return nil
 }
 
@@ -367,27 +404,68 @@ func (wm *WorktreeManager) copyConfiguredFiles(worktreePath string) error {
 	return nil
 }
 
-// CreateWorktreeBranch creates a new worktree with the specified branch name
+// SetupExistingWorktree copies configured files and runs post_create hooks on an
+// existing worktree. It does not create a git worktree or print created-worktree
+// success output. Copy warnings do not fail the command.
+func (wm *WorktreeManager) SetupExistingWorktree(branchName, worktreePath string) error {
+	wm.printf("🔧 Setting up worktree %s at %s\n", branchName, worktreePath)
+
+	if err := wm.copyConfiguredFiles(worktreePath); err != nil {
+		return fmt.Errorf("failed to copy configured files: %w", err)
+	}
+
+	if wm.HasPostCreateHooks() {
+		if err := wm.ExecuteHooks(wm.Config.Hooks.PostCreate, worktreePath, "post_create"); err != nil {
+			// Don't fail the entire operation for hook errors, just warn
+			fmt.Printf("⚠️  Warning: Some post_create hooks failed\n")
+			if wm.Options.Verbose {
+				fmt.Printf("Hook execution details: %v\n", err)
+			}
+		}
+	} else {
+		wm.printf("🪝 No post_create hooks configured\n")
+	}
+
+	return nil
+}
+
+// CreateWorktreeBranch creates a new worktree with the specified branch name.
 func (wm *WorktreeManager) CreateWorktreeBranch(branchName string) error {
+	_, err := wm.CreateOrReuseWorktree(branchName, "")
+	return err
+}
+
+// CreateOrReuseWorktree creates a worktree or reuses an existing matching one.
+func (wm *WorktreeManager) CreateOrReuseWorktree(branchName, worktreePath string) (WorktreeResult, error) {
 	// Validate branch name
 	if strings.TrimSpace(branchName) == "" {
-		return fmt.Errorf("branch name cannot be empty")
+		return WorktreeResult{}, fmt.Errorf("branch name cannot be empty")
 	}
 
 	// Check for invalid characters in branch name
 	if strings.ContainsAny(branchName, " \t\n\r~^:?*[\\@{}") {
-		return fmt.Errorf("invalid branch name '%s': contains invalid characters\n\nBranch names cannot contain: spaces, ~, ^, :, ?, *, [, \\, @, {, }\nTry using: feature/my-branch, bugfix/issue-123, etc.", branchName)
+		return WorktreeResult{}, fmt.Errorf("invalid branch name '%s': contains invalid characters\n\nBranch names cannot contain: spaces, ~, ^, :, ?, *, [, \\, @, {, }\nTry using: feature/my-branch, bugfix/issue-123, etc.", branchName)
 	}
 
-	if wm.BranchExists(branchName) {
-		return fmt.Errorf("branch '%s' already exists\n\nTo fix this:\n  • Use a different branch name\n  • Or delete the existing branch if no longer needed\n  • Use: git branch -D %s (to delete locally)\n  • Use: git push origin --delete %s (to delete remotely)", branchName, branchName, branchName)
+	if worktreePath == "" {
+		worktreePath = filepath.Join(wm.WorktreesDir, branchName)
 	}
-
-	worktreePath := filepath.Join(wm.WorktreesDir, branchName)
 
 	// Check if worktree path already exists
 	if _, err := os.Stat(worktreePath); err == nil {
-		return fmt.Errorf("worktree directory already exists: %s\n\nTo fix this:\n  • Choose a different branch name\n  • Remove the existing directory: rm -rf %s\n  • Or use: git worktree remove %s", worktreePath, worktreePath, worktreePath)
+		if ok, err := wm.pathMatchesWorktree(worktreePath, branchName); err != nil {
+			return WorktreeResult{}, err
+		} else if ok {
+			wm.printf("✓ Reusing existing worktree: %s\n", worktreePath)
+			return WorktreeResult{SourceDir: wm.RepoPath, Path: worktreePath, Branch: branchName, Reused: true}, nil
+		}
+		return WorktreeResult{}, fmt.Errorf("worktree directory already exists but is not branch %q: %s\n\nTo fix this:\n  • Choose a different branch name or path\n  • Remove the existing directory: rm -rf %s\n  • Or use: git worktree remove %s", branchName, worktreePath, worktreePath, worktreePath)
+	} else if !os.IsNotExist(err) {
+		return WorktreeResult{}, fmt.Errorf("cannot access worktree path %s: %w", worktreePath, err)
+	}
+
+	if wm.BranchExists(branchName) {
+		return WorktreeResult{}, fmt.Errorf("branch '%s' already exists\n\nTo fix this:\n  • Use a different branch name\n  • Or delete the existing branch if no longer needed\n  • Use: git branch -D %s (to delete locally)\n  • Use: git push origin --delete %s (to delete remotely)", branchName, branchName, branchName)
 	}
 
 	// Create new worktree with new branch
@@ -408,37 +486,23 @@ func (wm *WorktreeManager) CreateWorktreeBranch(branchName string) error {
 		if _, ok := err.(*exec.ExitError); ok {
 			// Parse specific git worktree errors
 			if strings.Contains(stderrStr, "already exists") {
-				return fmt.Errorf("git worktree creation failed: path already exists\n\nError details: %s\n\nTo fix this:\n  • Remove the existing directory\n  • Use a different branch name\n  • Clean up with: git worktree prune", stderrStr)
+				return WorktreeResult{}, fmt.Errorf("git worktree creation failed: path already exists\n\nError details: %s\n\nTo fix this:\n  • Remove the existing directory\n  • Use a different branch name\n  • Clean up with: git worktree prune", stderrStr)
 			}
 			if strings.Contains(stderrStr, "is already checked out") {
-				return fmt.Errorf("git worktree creation failed: branch already checked out\n\nError details: %s\n\nTo fix this:\n  • Use a different branch name\n  • Switch to a different branch in existing worktree\n  • Remove the existing worktree first", stderrStr)
+				return WorktreeResult{}, fmt.Errorf("git worktree creation failed: branch already checked out\n\nError details: %s\n\nTo fix this:\n  • Use a different branch name\n  • Switch to a different branch in existing worktree\n  • Remove the existing worktree first", stderrStr)
 			}
 			if strings.Contains(stderrStr, "not a valid object name") {
-				return fmt.Errorf("git worktree creation failed: invalid reference\n\nError details: %s\n\nTo fix this:\n  • Ensure you're in a valid git repository\n  • Check that HEAD points to a valid commit\n  • Try: git status to check repository state", stderrStr)
+				return WorktreeResult{}, fmt.Errorf("git worktree creation failed: invalid reference\n\nError details: %s\n\nTo fix this:\n  • Ensure you're in a valid git repository\n  • Check that HEAD points to a valid commit\n  • Try: git status to check repository state", stderrStr)
 			}
-			return fmt.Errorf("git worktree creation failed\n\nError details: %s\n\nTo fix this:\n  • Check git repository status: git status\n  • Ensure working directory is clean\n  • Verify branch name is valid\n  • Check available disk space", stderrStr)
+			return WorktreeResult{}, fmt.Errorf("git worktree creation failed\n\nError details: %s\n\nTo fix this:\n  • Check git repository status: git status\n  • Ensure working directory is clean\n  • Verify branch name is valid\n  • Check available disk space", stderrStr)
 		}
-		return fmt.Errorf("failed to create worktree: %w\n\nCommand: git worktree add -b %s %s\nWorking directory: %s", err, branchName, worktreePath, wm.RepoPath)
+		return WorktreeResult{}, fmt.Errorf("failed to create worktree: %w\n\nCommand: git worktree add -b %s %s\nWorking directory: %s", err, branchName, worktreePath, wm.RepoPath)
 	}
 
 	wm.printf("✓ Git worktree created successfully\n")
 
-	// Copy configured files to the new worktree
-	if err := wm.copyConfiguredFiles(worktreePath); err != nil {
-		return fmt.Errorf("failed to copy configured files: %w", err)
-	}
-
-	// Execute post_create hooks if configured
-	if wm.HasPostCreateHooks() {
-		if err := wm.ExecuteHooks(wm.Config.Hooks.PostCreate, worktreePath, "post_create"); err != nil {
-			// Don't fail the entire operation for hook errors, just warn
-			fmt.Printf("⚠️  Warning: Some post_create hooks failed, but worktree was created successfully\n")
-			if wm.Options.Verbose {
-				fmt.Printf("Hook execution details: %v\n", err)
-			}
-		}
-	} else {
-		wm.printf("🪝 No post_create hooks configured\n")
+	if err := wm.SetupExistingWorktree(branchName, worktreePath); err != nil {
+		return WorktreeResult{}, err
 	}
 
 	// Always show success and path info, even in quiet mode (essential info)
@@ -472,7 +536,16 @@ func (wm *WorktreeManager) CreateWorktreeBranch(branchName string) error {
 		fmt.Println(worktreePath)
 	}
 
-	return nil
+	return WorktreeResult{SourceDir: wm.RepoPath, Path: worktreePath, Branch: branchName, Created: true}, nil
+}
+
+func (wm *WorktreeManager) pathMatchesWorktree(worktreePath, branchName string) (bool, error) {
+	cmd := exec.Command("git", "-C", worktreePath, "rev-parse", "--abbrev-ref", "HEAD")
+	output, err := cmd.Output()
+	if err != nil {
+		return false, fmt.Errorf("failed to resolve worktree branch in %s: %w", worktreePath, err)
+	}
+	return strings.TrimSpace(string(output)) == branchName, nil
 }
 
 // ListWorktrees lists all existing worktrees

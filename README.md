@@ -45,6 +45,45 @@ workie finish feature/old-branch --prune-branch   # also delete the branch
 workie finish feature/old-branch --force           # skip uncommitted changes check
 ```
 
+### `workie setup [branch-name]`
+
+Copy configured files and run `post_create` hooks on an **existing** worktree. Does not run `git worktree add` or create a branch. Use this when another tool (for example Codex) already created the worktree.
+
+This is different from `workie setup-sprite`, which configures sprite.dev VMs.
+
+```bash
+workie setup feature/foo --source-tree-path /repo --worktree-path /path/to/worktree
+workie setup --source-tree-path /repo --worktree-path /path/to/worktree   # branch from checked-out branch
+```
+
+**Flags / env:**
+
+| Input | Description |
+|------|-------------|
+| `--source-tree-path` | Source git repository (falls back to `CODEX_SOURCE_TREE_PATH`) |
+| `--worktree-path` | Existing worktree directory (falls back to `CODEX_WORKTREE_PATH`) |
+
+If no branch name is given, it is derived from the worktree's checked-out branch (detached HEAD is rejected). If given, `[branch-name]` must match that branch.
+
+### `workie cleanup [branch-name]`
+
+Run `pre_remove` hooks and a dirty-worktree check on an existing worktree. Does **not** run `git worktree remove` or delete branches.
+
+```bash
+workie cleanup feature/foo --source-tree-path /repo --worktree-path /path/to/worktree
+workie cleanup feature/foo --source-tree-path /repo --worktree-path /path/to/worktree --force
+```
+
+**Flags / env:**
+
+| Input | Description |
+|------|-------------|
+| `--source-tree-path` | Source git repository (falls back to `CODEX_SOURCE_TREE_PATH`) |
+| `--worktree-path` | Existing worktree directory (falls back to `CODEX_WORKTREE_PATH`) |
+| `--force` | Skip the uncommitted-changes check only (does not remove the worktree) |
+
+If no branch name is given, it is derived from the worktree's checked-out branch (detached HEAD is rejected). If given, `[branch-name]` must match that branch.
+
 ### `workie autopilot <change> [change...]`
 
 Run the full OpenSpec aviation pipeline by spawning AI backend sessions for each phase:
@@ -145,7 +184,7 @@ autopilot:
     codex: "gpt-5.3-codex"
     opencode: "openai/gpt-5.5"
   opencode:
-    server_url: "http://127.0.0.1:4096"
+    server_url: "http://127.0.0.1:5099"
     username_env: "OPENCODE_SERVER_USERNAME"
     password_env: "OPENCODE_SERVER_PASSWORD"
 ```
