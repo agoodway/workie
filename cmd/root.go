@@ -29,10 +29,10 @@ var (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "workie",
-	Short: "Workie - An agentic coding assistant CLI with Git worktree management",
-	Long: `Workie is an agentic coding assistant CLI that streamlines development workflows
-through intelligent Git worktree management. It creates isolated development
-environments for each branch while maintaining your productivity.
+	Short: "Workie - Git worktree management CLI",
+	Long: `Workie is a CLI that streamlines development workflows through Git worktree
+management. It creates isolated development environments for each branch
+while keeping your setup consistent.
 
 Workie automates the creation of new branches and sets up worktree directories
 alongside your main repository, copying essential files and configurations to
@@ -197,7 +197,7 @@ func validateConfigFile(configPath string) error {
 
 // printVersion displays version information in a clean, readable format
 func printVersion() {
-	fmt.Printf("Workie - Agentic Coding Assistant CLI\n")
+	fmt.Printf("Workie - Git worktree management CLI\n")
 	fmt.Printf("Version: %s\n", Version)
 	if Commit != "unknown" {
 		fmt.Printf("Commit: %s\n", Commit)
@@ -206,7 +206,7 @@ func printVersion() {
 		fmt.Printf("Built: %s\n", BuildDate)
 	}
 	fmt.Printf("\n")
-	fmt.Printf("An intelligent Git worktree manager evolving into a comprehensive coding assistant.\n")
+	fmt.Printf("A Git worktree manager for isolated development environments.\n")
 	fmt.Printf("Learn more: https://github.com/agoodway/workie\n")
 }
 

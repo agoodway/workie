@@ -85,57 +85,6 @@ func TestLoadConfig(t *testing.T) {
 		}
 	})
 
-	t.Run("autopilot defaults", func(t *testing.T) {
-		configContent := `autopilot:
-  backend: opencode
-  models:
-    claude: opus
-    codex: gpt-5-codex
-    opencode: openai/gpt-5.5
-  opencode:
-    server_url: http://127.0.0.1:4096
-    username_env: CUSTOM_OPENCODE_USER
-    password_env: CUSTOM_OPENCODE_PASS`
-
-		configPath := filepath.Join(tempDir, ".workie.yaml")
-		err := os.WriteFile(configPath, []byte(configContent), 0644)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		config, err := LoadConfig(tempDir, "")
-		if err != nil {
-			t.Fatalf("Expected no error, got: %v", err)
-		}
-		if config.Autopilot == nil {
-			t.Fatal("Expected autopilot config to be set")
-		}
-		if config.Autopilot.Backend != "opencode" {
-			t.Fatalf("Expected backend opencode, got %q", config.Autopilot.Backend)
-		}
-		if config.Autopilot.Models["claude"] != "opus" {
-			t.Fatalf("Expected claude model opus, got %q", config.Autopilot.Models["claude"])
-		}
-		if config.Autopilot.Models["codex"] != "gpt-5-codex" {
-			t.Fatalf("Expected codex model gpt-5-codex, got %q", config.Autopilot.Models["codex"])
-		}
-		if config.Autopilot.Models["opencode"] != "openai/gpt-5.5" {
-			t.Fatalf("Expected opencode model openai/gpt-5.5, got %q", config.Autopilot.Models["opencode"])
-		}
-		if config.Autopilot.Opencode == nil {
-			t.Fatal("Expected opencode config to be set")
-		}
-		if config.Autopilot.Opencode.ServerURL != "http://127.0.0.1:4096" {
-			t.Fatalf("Expected server URL to be loaded, got %q", config.Autopilot.Opencode.ServerURL)
-		}
-		if config.Autopilot.Opencode.UsernameEnv != "CUSTOM_OPENCODE_USER" {
-			t.Fatalf("Expected username env to be loaded, got %q", config.Autopilot.Opencode.UsernameEnv)
-		}
-		if config.Autopilot.Opencode.PasswordEnv != "CUSTOM_OPENCODE_PASS" {
-			t.Fatalf("Expected password env to be loaded, got %q", config.Autopilot.Opencode.PasswordEnv)
-		}
-	})
-
 	t.Run("invalid YAML", func(t *testing.T) {
 		configContent := `files_to_copy:
   - .env.example

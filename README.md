@@ -5,7 +5,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/agoodway/workie)](https://goreportcard.com/report/github.com/agoodway/workie)
 [![GitHub release](https://img.shields.io/github/release/agoodway/workie.svg)](https://github.com/agoodway/workie/releases/latest)
 
-A developer CLI for Git worktree management and AI-powered autopilot workflows.
+A developer CLI for Git worktree management.
 
 ## Install
 
@@ -84,40 +84,6 @@ workie cleanup feature/foo --source-tree-path /repo --worktree-path /path/to/wor
 
 If no branch name is given, it is derived from the worktree's checked-out branch (detached HEAD is rejected). If given, `[branch-name]` must match that branch.
 
-### `workie autopilot <change> [change...]`
-
-Run the full OpenSpec aviation pipeline by spawning AI backend sessions for each phase:
-
-1. **prepare-for-takeoff** — Create td issues from `tasks.md`
-2. **takeoff** — Create branch, implement all issues
-3. **pre-landing-check** — Multi-specialist code review
-4. **prepare-for-landing** — Fix review findings
-5. **land-the-plane** — Verify, approve, commit, open PR
-
-Each change must have a directory at `openspec/changes/<name>/` with a `tasks.md` file.
-
-```bash
-workie autopilot add-user-auth
-workie autopilot add-user-auth improve-dashboard   # multiple changes
-workie autopilot add-user-auth --start-phase 3     # resume from phase 3
-workie autopilot add-user-auth --dry-run            # preview without running
-workie autopilot add-user-auth --show-output        # stream AI output
-```
-
-**Flags:**
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--backend` | `claude` | AI backend (`claude`, `codex`, `opencode`) |
-| `--model` | — | Override the model for the backend |
-| `--start-phase` | `1` | Phase to start from |
-| `--phase-timeout` | `45m` | Timeout per phase |
-| `--auto-approve` | `false` | Skip confirmation prompts |
-| `--no-commit` | `false` | Skip intermediate commits |
-| `--dry-run` | `false` | Show plan without executing |
-| `--show-output` | `false` | Stream backend output |
-| `--notify` | `true` | OS notifications on phase completion |
-
 ### `workie setup-sprite`
 
 Run setup commands on [sprite.dev](https://sprite.dev) VMs.
@@ -175,18 +141,6 @@ sprite:
     - "mkdir -p ~/go/bin"
   post_setup:
     - "which td && td --version"
-
-# Autopilot settings
-autopilot:
-  backend: "claude"
-  models:
-    claude: "opus"
-    codex: "gpt-5.3-codex"
-    opencode: "openai/gpt-5.5"
-  opencode:
-    server_url: "http://127.0.0.1:5099"
-    username_env: "OPENCODE_SERVER_USERNAME"
-    password_env: "OPENCODE_SERVER_PASSWORD"
 ```
 
 ## How it works

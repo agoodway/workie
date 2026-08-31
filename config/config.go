@@ -27,24 +27,10 @@ type SpriteConfig struct {
 
 // Config represents the YAML configuration structure
 type Config struct {
-	FilesToCopy     []string               `yaml:"files_to_copy" mapstructure:"files_to_copy"`
-	Hooks           *Hooks                 `yaml:"hooks,omitempty" mapstructure:"hooks"`
-	Sprite          *SpriteConfig          `yaml:"sprite,omitempty" mapstructure:"sprite"`
-	Autopilot  *AutopilotConfig `yaml:"autopilot,omitempty" mapstructure:"autopilot"`
-	LoadedFrom string           `yaml:"-" mapstructure:"-"` // Path to the loaded config file (not serialized)
-}
-
-// AutopilotConfig represents defaults for autopilot runs.
-type AutopilotConfig struct {
-	Backend  string                   `yaml:"backend,omitempty" mapstructure:"backend"`
-	Models   map[string]string        `yaml:"models,omitempty" mapstructure:"models"`
-	Opencode *AutopilotOpencodeConfig `yaml:"opencode,omitempty" mapstructure:"opencode"`
-}
-
-type AutopilotOpencodeConfig struct {
-	ServerURL   string `yaml:"server_url,omitempty" mapstructure:"server_url"`
-	UsernameEnv string `yaml:"username_env,omitempty" mapstructure:"username_env"`
-	PasswordEnv string `yaml:"password_env,omitempty" mapstructure:"password_env"`
+	FilesToCopy []string      `yaml:"files_to_copy" mapstructure:"files_to_copy"`
+	Hooks       *Hooks        `yaml:"hooks,omitempty" mapstructure:"hooks"`
+	Sprite      *SpriteConfig `yaml:"sprite,omitempty" mapstructure:"sprite"`
+	LoadedFrom  string        `yaml:"-" mapstructure:"-"` // Path to the loaded config file (not serialized)
 }
 
 // LoadConfig attempts to load configuration from the specified file path,
