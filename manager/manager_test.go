@@ -42,7 +42,7 @@ func TestCreateOrReuseWorktree(t *testing.T) {
 		t.Fatalf("CreateWorktreesDirectory failed: %v", err)
 	}
 
-	created, err := wm.CreateOrReuseWorktree("foreman/test-change", "")
+	created, err := wm.CreateOrReuseWorktree("feature/test-change", "")
 	if err != nil {
 		t.Fatalf("CreateOrReuseWorktree create failed: %v", err)
 	}
@@ -53,7 +53,7 @@ func TestCreateOrReuseWorktree(t *testing.T) {
 		t.Fatalf("expected worktree path to exist: %v", err)
 	}
 
-	reused, err := wm.CreateOrReuseWorktree("foreman/test-change", created.Path)
+	reused, err := wm.CreateOrReuseWorktree("feature/test-change", created.Path)
 	if err != nil {
 		t.Fatalf("CreateOrReuseWorktree reuse failed: %v", err)
 	}
